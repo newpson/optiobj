@@ -1,0 +1,16 @@
+add_library(Newpson_Mesh STATIC)
+target_sources(Newpson_Mesh
+    PRIVATE Mesh.cpp
+    PUBLIC Mesh.hpp)
+target_include_directories(Newpson_Mesh
+    PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries(Newpson_Mesh
+    PUBLIC Qt5::Core Qt5::Gui Qt5::Test Qt5::Widgets)
+
+add_subdirectory(test)
+
+add_executable(app)
+target_sources(app
+    PRIVATE main.cpp)
+target_link_libraries(app
+    Newpson_Mesh)
