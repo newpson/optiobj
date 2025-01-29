@@ -23,6 +23,8 @@ char const * Mesh::statusToString(Mesh::Status status)
     case STATUS_ERROR_INVALID_PARAMETERS_VERTEX_TEXTURE: return "Too few points to parse a texture vertex";
     case STATUS_ERROR_INVALID_PARAMETERS_FACE: return "Too few points to parse a face";
     case STATUS_ERROR_INVALID_PARAMETERS_COMPONENTS: return "Ill-formed components in face vertices";
+    case STATUS_ERROR_INVALID_INDEX_VERTEX_GEOMETRY: return "Invalid geometry vertex index";
+    case STATUS_ERROR_INVALID_INDEX_VERTEX_TEXTURE: return "Invalid texture vertex index";
     default: return "Reserved state";
     }
 }
@@ -80,7 +82,12 @@ Mesh::Status Mesh::parseTextureVertex(QVector2D &outVertex, QStringList &tokens)
     return STATUS_OK;
 }
 
-Mesh::Status Mesh::parseFace(QVector<int> &outGeometryFace, QVector<int> &outTextureFace, QStringList &tokens)
+Mesh::Status Mesh::parseFace(
+    int numGeometryVertices,
+    int numTextureVertices,
+    QVector<int> &outGeometryFace,
+    QVector<int> &outTextureFace,
+    QStringList &tokens)
 {
     if (tokens.length() < LENGTH_MIN_DATATYPE_FACE)
         return STATUS_ERROR_INVALID_PARAMETERS_FACE;
@@ -98,6 +105,8 @@ Mesh::Status Mesh::parseFace(QVector<int> &outGeometryFace, QVector<int> &outTex
             indexGeometry = components[INDEX_TOKEN_VERTEX_COMPONENT_GEOMETRY].toUInt(&parseSuccess);
             if (!parseSuccess)
                 return STATUS_ERROR_INVALID_PARAMETERS_COMPONENTS;
+            if (indexGeometry > numGeometryVertices)
+                return STATUS_ERROR_INVALID_INDEX_VERTEX_GEOMETRY;
             outGeometryFace.append(indexGeometry);
         } else {
             return STATUS_ERROR_INVALID_PARAMETERS_COMPONENTS;
@@ -109,6 +118,8 @@ Mesh::Status Mesh::parseFace(QVector<int> &outGeometryFace, QVector<int> &outTex
                 indexTexture = components[INDEX_TOKEN_VERTEX_COMPONENT_TEXTURE].toUInt(&parseSuccess);
                 if (!parseSuccess)
                     return STATUS_ERROR_INVALID_PARAMETERS_COMPONENTS;
+                if (indexTexture > numTextureVertices)
+                    return STATUS_ERROR_INVALID_INDEX_VERTEX_TEXTURE;
                 outTextureFace.append(indexTexture);
             }
         }
@@ -144,7 +155,12 @@ Mesh::Status Mesh::evaluateTokens(Mesh &outMesh, QStringList &tokens)
         }
     } else if (datatype[0] == 'f') {
         QVector<int> geometryFace, textureFace;
-        status = parseFace(geometryFace, textureFace, tokens);
+        status = parseFace(
+            outMesh.geometryVertices.length(),
+            outMesh.textureVertices.length(),
+            geometryFace,
+            textureFace,
+            tokens);
         // #2: make wrapper as below in read()
         if (status <= STATUS_ERROR) {
             outMesh.geometryFaces.append(geometryFace);

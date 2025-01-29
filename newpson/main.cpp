@@ -10,7 +10,7 @@
 int main()
 {
     Newpson::Mesh mesh;
-    auto status = Newpson::Mesh::read(mesh, PROJECT_ASSETS "/cube.obj");
+    auto status = Newpson::Mesh::read(mesh, PROJECT_ASSETS "/bad.obj");
 
     if (status != Newpson::Mesh::STATUS_OK) {
         qDebug() << Newpson::Mesh::statusToString(status);

@@ -58,6 +58,8 @@ public:
         STATUS_ERROR_INVALID_PARAMETERS_VERTEX_TEXTURE,
         STATUS_ERROR_INVALID_PARAMETERS_FACE,
         STATUS_ERROR_INVALID_PARAMETERS_COMPONENTS,
+        STATUS_ERROR_INVALID_INDEX_VERTEX_GEOMETRY,
+        STATUS_ERROR_INVALID_INDEX_VERTEX_TEXTURE,
         STATUS_ERROR_END,
     };
 
@@ -76,7 +78,12 @@ public:
     static bool isComment(QString &line);
     static Status parseGeometryVertex(QVector3D &outVertex, QStringList &tokens);
     static Status parseTextureVertex(QVector2D &outVertex, QStringList &tokens);
-    static Status parseFace(QVector<int> &outGeometryFace, QVector<int> &outTextureFace, QStringList &tokens);
+    static Status parseFace(
+            int numGeometryVertices,
+            int numTextureVertices,
+            QVector<int> &outGeometryFace,
+            QVector<int> &outTextureFace,
+            QStringList &tokens);
     static Status evaluateTokens(Mesh &outMesh, QStringList &tokens);
 
     static Status read(Mesh &outMesh, QTextStream &input);
