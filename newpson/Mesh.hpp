@@ -12,29 +12,6 @@ namespace Newpson {
 
 class Mesh
 {
-    static constexpr QChar CHAR_COMMENT = '#';
-    static constexpr QChar CHAR_SPACE = ' ';
-    static constexpr QChar CHAR_DELIMITER = '/';
-
-    QVector<QVector3D> geometryVertices;
-    QVector<QVector<int>> geometryFaces;
-    QVector<QVector2D> textureVertices;
-    QVector<QVector<int>> textureFaces;
-
-    enum ParsingConstants {
-        LENGTH_MIN_DATATYPE_VERTEX_GEOMETRY = 1 + 3, // DATATYPE VERTEX_X VERTEX_Y VERTEX_Z
-        LENGTH_MIN_DATATYPE_VERTEX_TEXTURE = 1 + 2, // DATATYPE VERTEX_X VERTEX_Y
-        LENGTH_MIN_DATATYPE_FACE = 1 + 3, // DATATYPE VERTEX_1 VERTEX_2 VERTEX_3 ...
-        LENGTH_MIN_VERTEX_COMPONENTS = 1, // COMPONENT_GEOMETRY
-
-        INDEX_TOKEN_DATATYPE = 0,
-        INDEX_TOKEN_VERTEX_X = 1,
-        INDEX_TOKEN_VERTEX_Y = 2,
-        INDEX_TOKEN_VERTEX_Z = 3,
-        INDEX_TOKEN_VERTEX_COMPONENT_GEOMETRY = 0,
-        INDEX_TOKEN_VERTEX_COMPONENT_TEXTURE = 1,
-    };
-
 public:
     enum Status {
         STATUS_VERBOSE,
@@ -61,6 +38,8 @@ public:
         STATUS_ERROR_INVALID_INDEX_VERTEX_GEOMETRY,
         STATUS_ERROR_INVALID_INDEX_VERTEX_TEXTURE,
         STATUS_ERROR_END,
+
+	STATUS_RESERVED,
     };
 
 //  #1: "sorry, unimplemented: non-trivial designated initializers not supported"
@@ -91,7 +70,45 @@ public:
     static Status read(Mesh &outMesh, QString &filename);
     static Status read(Mesh &outMesh, QString &&filename);
     static Status read(Mesh &outMesh, char const *filename);
+
+protected:
+    static constexpr QChar CHAR_COMMENT = '#';
+    static constexpr QChar CHAR_SPACE = ' ';
+    static constexpr QChar CHAR_DELIMITER = '/';
+
+    QVector<QVector3D> geometryVertices;
+    QVector<QVector<int>> geometryFaces;
+    QVector<QVector2D> textureVertices;
+    QVector<QVector<int>> textureFaces;
+
+    enum ParsingConstants {
+        LENGTH_MIN_DATATYPE_VERTEX_GEOMETRY = 1 + 3, // DATATYPE VERTEX_X VERTEX_Y VERTEX_Z
+        LENGTH_MIN_DATATYPE_VERTEX_TEXTURE = 1 + 2, // DATATYPE VERTEX_X VERTEX_Y
+        LENGTH_MIN_DATATYPE_FACE = 1 + 3, // DATATYPE VERTEX_1 VERTEX_2 VERTEX_3 ...
+        LENGTH_MIN_VERTEX_COMPONENTS = 1, // COMPONENT_GEOMETRY
+
+        INDEX_TOKEN_DATATYPE = 0,
+        INDEX_TOKEN_VERTEX_X = 1,
+        INDEX_TOKEN_VERTEX_Y = 2,
+        INDEX_TOKEN_VERTEX_Z = 3,
+        INDEX_TOKEN_VERTEX_COMPONENT_GEOMETRY = 0,
+        INDEX_TOKEN_VERTEX_COMPONENT_TEXTURE = 1,
+    };
 };
+
+namespace Utility {
+
+/* How does it work
+ *
+ * hasChanged(anystate, true); // reset
+ * hasChanged(state); // set state that should be immutable
+ * hasChanged(state) // check if state changed
+ * hasChanged(state) // check if state changed
+ * ...
+ */
+bool hasChanged(bool nextState, bool reset = false);
+
+} // namespace Utility
 
 } // namespace Newpson
 

@@ -42,7 +42,7 @@ Mesh::Status Mesh::statusType(Mesh::Status status)
         return STATUS_WARN;
     else if (status > STATUS_ERROR_BEGIN && status < STATUS_ERROR_END)
         return STATUS_ERROR;
-    return STATUS_OK;
+    return STATUS_RESERVED;
 }
 
 Mesh::Mesh() {}
@@ -82,6 +82,23 @@ Mesh::Status Mesh::parseTextureVertex(QVector2D &outVertex, QStringList &tokens)
     return STATUS_OK;
 }
 
+bool Utility::hasChanged(bool nextState, bool reset)
+{
+    static bool state = false;
+    static bool isMutable = false;
+
+    if (reset) {
+        isMutable = true;
+        return false;
+    }
+    else if (isMutable) {
+        state = nextState;
+        isMutable = false;
+    }
+
+    return (state != nextState);
+}
+
 Mesh::Status Mesh::parseFace(
     int numGeometryVertices,
     int numTextureVertices,
@@ -92,6 +109,8 @@ Mesh::Status Mesh::parseFace(
     if (tokens.length() < LENGTH_MIN_DATATYPE_FACE)
         return STATUS_ERROR_INVALID_PARAMETERS_FACE;
 
+    bool hasTextureVertices = false;
+    Utility::hasChanged(hasTextureVertices, true);
     for (auto triadIter = tokens.begin() + 1; triadIter != tokens.end(); ++triadIter) {
         QString &triad = *triadIter;
 
@@ -112,15 +131,19 @@ Mesh::Status Mesh::parseFace(
             return STATUS_ERROR_INVALID_PARAMETERS_COMPONENTS;
         }
 
-        // #3: throw error if there is no texture component on some of the vertices
         if (components.length() > LENGTH_MIN_VERTEX_COMPONENTS) {
             if (!components[INDEX_TOKEN_VERTEX_COMPONENT_TEXTURE].isEmpty()) {
+                if (Utility::hasChanged((hasTextureVertices = true)))
+                    return STATUS_ERROR_INVALID_PARAMETERS_COMPONENTS;
                 indexTexture = components[INDEX_TOKEN_VERTEX_COMPONENT_TEXTURE].toUInt(&parseSuccess);
                 if (!parseSuccess)
                     return STATUS_ERROR_INVALID_PARAMETERS_COMPONENTS;
                 if (indexTexture > numTextureVertices)
                     return STATUS_ERROR_INVALID_INDEX_VERTEX_TEXTURE;
                 outTextureFace.append(indexTexture);
+            } else {
+                if (Utility::hasChanged((hasTextureVertices = false)))
+                    return STATUS_ERROR_INVALID_PARAMETERS_COMPONENTS;
             }
         }
     }
