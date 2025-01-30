@@ -1,9 +1,10 @@
 #include <QTest>
 #include <QString>
 #include <QTextStream>
+#include "obj/Parser.hpp"
 #include "Mesh.hpp"
 
-namespace Newpson::Test {
+namespace Newpson::Parsing::obj::Test {
 
 class Mesh: public QObject
 {
@@ -12,8 +13,9 @@ private slots:
     void parseGeometryVertex()
     {
         Newpson::Mesh mesh;
-        auto status = Newpson::Mesh::read(mesh, PROJECT_ASSETS "/bad.obj");
-        QVERIFY(status >= Newpson::Mesh::STATUS_ERROR);
+        auto status = Newpson::Parsing::obj::Parser::load(PROJECT_ASSETS "/bad.obj", mesh);
+
+        QVERIFY(status >= Newpson::Parsing::obj::Parser::STATUS_OK);
     }
 };
 
