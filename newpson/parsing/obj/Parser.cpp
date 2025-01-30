@@ -38,7 +38,6 @@ bool Parser::isComment(QString const &line)
 
 Parser::Status Parser::statusType(Parser::Status const status)
 {
-    //! REVIEW: const bool (OK)
     bool const isVerbose = (status > STATUS_DEBUG_BEGIN && status < STATUS_DEBUG_END);
     if (isVerbose)
         return STATUS_VERBOSE;
@@ -109,7 +108,6 @@ bool Utility::hasStateChanged(bool nextState, bool reset)
     return (state != nextState);
 }
 
-//! REVIEW: выходные в конец, остальным const/const &
 Parser::Status Parser::parseFace(
     int const numGeometryVertices,
     int const numTextureVertices,
@@ -129,10 +127,7 @@ Parser::Status Parser::parseFace(
         if (components.length() < LENGTH_MIN_VERTEX_COMPONENTS)
             return STATUS_ERROR_INVALID_PARAMETERS_COMPONENTS;
 
-        //! REVIEW: scalar initialization
-        //! REVIEW: isParsedSuccessfuly
         bool isParsedSuccessfuly = false;
-        //! REVIEW: separate definition (OK)
         int indexGeometry = 0;
         int indexTexture = 0;
         if (!components[INDEX_TOKEN_VERTEX_COMPONENT_GEOMETRY].isEmpty()) {
