@@ -21,19 +21,6 @@ QString Parser::statusToString(Parser::Status const status)
     case STATUS_ERROR_COMPONENTS_ASSYMETRY: return "Face components assymetry";
     case STATUS_ERROR_INPUT: return "Error opening file";
     case STATUS_ERROR_INPUT_EMPTY: return "File is empty";
-    // Legacy errors/warns
-    case STATUS_WARN_IO_EMPTY: return "Opened file is empty";
-    case STATUS_WARN_UNKNOWN_DATATYPE: return "Unknown data type";
-    case STATUS_ERROR_IO: return "Input/output error";
-    case STATUS_ERROR_INVALID_FLOAT_X: return "Float parsing error (x coordinate)";
-    case STATUS_ERROR_INVALID_FLOAT_Y: return "Float parsing error (y coordinate)";
-    case STATUS_ERROR_INVALID_FLOAT_Z: return "Float parsing error (z coordinate)";
-    case STATUS_ERROR_INVALID_PARAMETERS_VERTEX_GEOMETRY: return "Too few points to parse a geometry vertex";
-    case STATUS_ERROR_INVALID_PARAMETERS_VERTEX_TEXTURE: return "Too few points to parse a texture vertex";
-    case STATUS_ERROR_INVALID_PARAMETERS_FACE: return "Too few points to parse a face";
-    case STATUS_ERROR_INVALID_PARAMETERS_COMPONENTS: return "Ill-formed components in face vertices";
-    case STATUS_ERROR_INVALID_INDEX_VERTEX_GEOMETRY: return "Invalid geometry vertex index";
-    case STATUS_ERROR_INVALID_INDEX_VERTEX_TEXTURE: return "Invalid texture vertex index";
     default: return "Reserved state";
     }
 }
@@ -43,10 +30,6 @@ Parser::Status Parser::statusType(Parser::Status const status)
     bool const isVerbose = (status > STATUS_DEBUG_BEGIN && status < STATUS_DEBUG_END);
     if (isVerbose)
         return STATUS_VERBOSE;
-
-    bool const isWarning = (status > STATUS_DEBUG_BEGIN && status < STATUS_DEBUG_END);
-    if (isWarning)
-        return STATUS_WARN;
 
     bool const isError = (status > STATUS_ERROR_BEGIN && status < STATUS_ERROR_END);
     if (isError)
