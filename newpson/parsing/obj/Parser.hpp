@@ -15,6 +15,16 @@ namespace Newpson::Parsing::obj {
 class Parser
 {
 public:
+    enum LineType {
+        LINETYPE_COMMENT,
+        LINETYPE_VERTEX_GEOMETRIC,
+        LINETYPE_VERTEX_TEXTURE,
+        // there is no any type of normals in .obj beside vertex normals; should we call this type just LINETYPE_NORMAL?
+        LINETYPE_NORMAL_VERTEX,
+        LINETYPE_FACE,
+        LINETYPE_UNKNOWN,
+    };
+
     enum Status {
         STATUS_VERBOSE,
         STATUS_DEBUG_BEGIN,
@@ -29,6 +39,11 @@ public:
 
         STATUS_ERROR,
         STATUS_ERROR_BEGIN,
+        STATUS_ERROR_STATE_BROKEN,
+        STATUS_ERROR_EXPECTED_FLOAT,
+        STATUS_ERROR_EXPECTED_INTEGER,
+
+        // Legacy errors
         STATUS_ERROR_IO,
         STATUS_ERROR_INVALID_FLOAT_X,
         STATUS_ERROR_INVALID_FLOAT_Y,
@@ -47,11 +62,52 @@ public:
     static QString statusToString(Status status);
     static Status statusType(Status const status);
 
-    static Status load(QTextStream &input, Mesh &outMesh);
-    static Status load(QTextStream &&input, Mesh &outMesh);
-    static Status load(QString const &filename, Mesh &outMesh);
+    // static Status load(QTextStream &input, Mesh &outMesh);
+    // static Status load(QTextStream &&input, Mesh &outMesh);
+    // static Status load(QString const &filename, Mesh &outMesh);
+    Status load(QTextStream &input, Mesh &outMesh);
+    Status load(QTextStream &&input, Mesh &outMesh);
+    Status load(QString const &filename, Mesh &outMesh);
+
+    struct FilePoint
+    {
+        int line;
+        int column;
+    };
+
+    FilePoint getFilePoint() const;
 
 protected:
+    static constexpr int numWarnCodes = (STATUS_WARN_END - STATUS_WARN_BEGIN - 1);
+    static constexpr int numErrorsCodes = (STATUS_WARN_END - STATUS_WARN_BEGIN - 1);
+    // QPoint is too complex for this
+    std::array<QVector<FilePoint>, numWarnCodes> warnings;
+    QChar const *ctx_lineBegin; // to calculate column when a warning comes, can be join into structure with lineIter and lineEnd
+    FilePoint filePoint;
+
+    bool isEndOrSpace(QChar const * const lineEnd, QChar const * const lineIter);
+
+    bool skipWhiteSpace(QChar const * const lineEnd, QChar const *&lineIter);
+    void skipContent(QChar const * const lineEnd, QChar const *&lineIter);
+    bool isNextCharEndOrSpace(QChar const * const lineEnd, QChar const *&lineIter);
+
+    LineType parseLineType(QChar const * const lineEnd, QChar const *&lineIter);
+    Status parseFloat(QChar const * const lineEnd, QChar const *&lineIter, float &outFloat);
+    Status parseVertexGeometric(QChar const * const lineEnd, QChar const *&lineIter, QVector3D &outVertex);
+    Status parseVertexTexture(QChar const * const lineEnd, QChar const *&lineIter, QVector2D &outVertex);
+    Status parseFace(
+            int numVerticesGeometric,
+            int numVerticesTexture,
+            QChar const * const lineEnd,
+            QChar const *&lineIter,
+            QVector<int> &outFaceGeometric,
+            QVector<int> &outFaceTexture);
+
+
+
+
+    // Legacy
+
     enum ParsingConstants {
         LENGTH_MIN_DATATYPE_VERTEX_GEOMETRY = 1 + 3, // DATATYPE VERTEX_X VERTEX_Y VERTEX_Z
         LENGTH_MIN_DATATYPE_VERTEX_TEXTURE = 1 + 2, // DATATYPE VERTEX_X VERTEX_Y
@@ -73,7 +129,7 @@ protected:
     static bool isComment(QString const &line);
     static Status parseGeometryVertex(QStringList const &tokens, QVector3D &outVertex);
     static Status parseTextureVertex(QStringList const &tokens, QVector2D &outVertex);
-    static Status parseFace(
+    static Status parseFace_legacy(
             int const numGeometryVertices,
             int const numTextureVertices,
             QStringList const &tokens,
