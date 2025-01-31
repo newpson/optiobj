@@ -34,12 +34,6 @@ QString Parser::statusToString(Parser::Status const status)
     }
 }
 
-bool Parser::isComment(QString const &line)
-{
-    Q_ASSERT(!line.isEmpty());
-    return line[0] == CHAR_COMMENT;
-}
-
 Parser::Status Parser::statusType(Parser::Status const status)
 {
     bool const isVerbose = (status > STATUS_DEBUG_BEGIN && status < STATUS_DEBUG_END);
@@ -57,158 +51,6 @@ Parser::Status Parser::statusType(Parser::Status const status)
     return STATUS_RESERVED;
 }
 
-Parser::Status Parser::parseGeometryVertex(QStringList const &tokens, QVector3D &outVertex)
-{
-    if (tokens.length() < LENGTH_MIN_DATATYPE_VERTEX_GEOMETRY)
-        return STATUS_ERROR_INVALID_PARAMETERS_VERTEX_GEOMETRY;
-
-    bool parseSuccess;
-    outVertex.setX(tokens[INDEX_TOKEN_VERTEX_X].toFloat(&parseSuccess));
-    if (!parseSuccess)
-        return STATUS_ERROR_INVALID_FLOAT_X;
-    outVertex.setY(tokens[INDEX_TOKEN_VERTEX_Y].toFloat(&parseSuccess));
-    if (!parseSuccess)
-        return STATUS_ERROR_INVALID_FLOAT_Y;
-    outVertex.setY(tokens[INDEX_TOKEN_VERTEX_Z].toFloat(&parseSuccess));
-    if (!parseSuccess)
-        return STATUS_ERROR_INVALID_FLOAT_Z;
-
-    return STATUS_OK;
-}
-
-Parser::Status Parser::parseTextureVertex(QStringList const &tokens, QVector2D &outVertex)
-{
-    if (tokens.length() < LENGTH_MIN_DATATYPE_VERTEX_TEXTURE)
-        return STATUS_ERROR_INVALID_PARAMETERS_VERTEX_GEOMETRY;
-
-    bool parseSuccess;
-
-    outVertex.setX(tokens[INDEX_TOKEN_VERTEX_X].toFloat(&parseSuccess));
-    if (!parseSuccess)
-        return STATUS_ERROR_INVALID_FLOAT_X;
-
-    outVertex.setY(tokens[INDEX_TOKEN_VERTEX_Y].toFloat(&parseSuccess));
-    if (!parseSuccess)
-        return STATUS_ERROR_INVALID_FLOAT_Y;
-
-    return STATUS_OK;
-}
-
-// TODO refactor (change logic)
-bool Utility::hasStateChanged(bool nextState, bool reset)
-{
-    static bool state = false;
-    static bool isMutable = false;
-
-    if (reset) {
-        isMutable = true;
-        return false;
-    }
-    else if (isMutable) {
-        state = nextState;
-        isMutable = false;
-    }
-
-    return (state != nextState);
-}
-
-Parser::Status Parser::parseFace(
-    int const numGeometryVertices,
-    int const numTextureVertices,
-    QStringList const &tokens,
-    QVector<int> &outGeometryFace,
-    QVector<int> &outTextureFace)
-{
-    if (tokens.length() < LENGTH_MIN_DATATYPE_FACE)
-        return STATUS_ERROR_INVALID_PARAMETERS_FACE;
-
-    bool hasTextureVertices = false;
-    Utility::hasStateChanged(hasTextureVertices, true);
-    for (auto triadIter = tokens.begin() + 1; triadIter != tokens.end(); ++triadIter) {
-        const QString &triad = *triadIter;
-
-        QStringList components = triad.split(CHAR_DELIMITER);
-        if (components.length() < LENGTH_MIN_VERTEX_COMPONENTS)
-            return STATUS_ERROR_INVALID_PARAMETERS_COMPONENTS;
-
-        bool isParsedSuccessfuly = false;
-        int indexGeometry = 0;
-        int indexTexture = 0;
-        if (!components[INDEX_TOKEN_VERTEX_COMPONENT_GEOMETRY].isEmpty()) {
-            indexGeometry = components[INDEX_TOKEN_VERTEX_COMPONENT_GEOMETRY].toUInt(&isParsedSuccessfuly);
-            if (!isParsedSuccessfuly)
-                return STATUS_ERROR_INVALID_PARAMETERS_COMPONENTS;
-            if (indexGeometry > numGeometryVertices)
-                return STATUS_ERROR_INVALID_INDEX_VERTEX_GEOMETRY;
-            outGeometryFace.append(indexGeometry);
-        } else {
-            return STATUS_ERROR_INVALID_PARAMETERS_COMPONENTS;
-        }
-
-        if (components.length() > LENGTH_MIN_VERTEX_COMPONENTS) {
-            if (!components[INDEX_TOKEN_VERTEX_COMPONENT_TEXTURE].isEmpty()) {
-                if (Utility::hasStateChanged((hasTextureVertices = true)))
-                    return STATUS_ERROR_INVALID_PARAMETERS_COMPONENTS;
-                indexTexture = components[INDEX_TOKEN_VERTEX_COMPONENT_TEXTURE].toUInt(&isParsedSuccessfuly);
-                if (!isParsedSuccessfuly)
-                    return STATUS_ERROR_INVALID_PARAMETERS_COMPONENTS;
-                if (indexTexture > numTextureVertices)
-                    return STATUS_ERROR_INVALID_INDEX_VERTEX_TEXTURE;
-                outTextureFace.append(indexTexture);
-            } else {
-                if (Utility::hasStateChanged((hasTextureVertices = false)))
-                    return STATUS_ERROR_INVALID_PARAMETERS_COMPONENTS;
-            }
-        }
-    }
-
-    return STATUS_OK;
-}
-
-Parser::Status Parser::evaluateTokens(QStringList const &tokens, Mesh &outMesh)
-{
-    Parser::Status status = STATUS_OK;
-    QString const &datatype = tokens[INDEX_TOKEN_DATATYPE];
-
-    if (datatype[0] == 'v') {
-        if (datatype.length() > 1) {
-            if (datatype[1] == 't') {
-                QVector2D vertex;
-                status = parseTextureVertex(tokens, vertex);
-                if (status <= STATUS_ERROR) {
-                    outMesh.textureVertices.append(vertex);
-                    qDebug() << vertex;
-                }
-            }
-        } else {
-            QVector3D vertex;
-            status = parseGeometryVertex(tokens, vertex);
-            // #2: make wrapper as below in read()
-            if (status <= STATUS_ERROR) {
-                outMesh.geometryVertices.append(vertex);
-                qDebug() << vertex;
-            }
-        }
-    } else if (datatype[0] == 'f') {
-        QVector<int> geometryFace, textureFace;
-        status = parseFace(
-            outMesh.geometryVertices.length(),
-            outMesh.textureVertices.length(),
-            tokens,
-            geometryFace,
-            textureFace);
-        // #2: make wrapper as below in read()
-        if (status <= STATUS_ERROR) {
-            outMesh.geometryFaces.append(geometryFace);
-            outMesh.textureFaces.append(textureFace);
-            qDebug() << geometryFace << ";" << textureFace;
-        }
-    } else {
-        status = STATUS_WARN_UNKNOWN_DATATYPE;
-    }
-
-    return status;
-}
 
 bool Parser::skipWhiteSpace(QChar const * const lineEnd, QChar const *&lineIter)
 {
@@ -238,6 +80,7 @@ bool Parser::isNextCharEndOrSpace(QChar const * const lineEnd, QChar const *&lin
 
 Parser::LineType Parser::parseLineType(QChar const * const lineEnd, QChar const *&lineIter)
 {
+    //! REVIEW: инвертировать внешний иф, чтобы была меньше вложенность
     if (lineIter < lineEnd) {
         if (*lineIter == '#') {
             return LINETYPE_COMMENT;
@@ -372,7 +215,7 @@ Parser::Status Parser::parseVertexTexture(
     return STATUS_OK;
 }
 
-Parser::Status parseComponents(
+Parser::Status parseFaceVertexComponents(
         QChar const * const lineEnd,
         QChar const *&lineIter,
         int &indexGeometric,
@@ -426,77 +269,73 @@ Parser::Status parseFace(
         return status;
 }
 
-Parser::Status Parser::load(QTextStream &input, Mesh &outMesh)
+Parser::ParserStatus Parser::load(QTextStream &input, Mesh &outMesh)
 {
-    for (auto &filePoints: warnings)
-        filePoints.clear();
+    ParserStatus parserStatus;
 
-    int lineNumber = 0;
     while (!input.atEnd()) {
-        QString const line = input.readLine();
-        ++lineNumber;
-
-        filePoint.line = lineNumber;
+        const QString line = input.readLine();
+        ++parserStatus.lineNumber;
 
         if (line.isEmpty())
             continue;
 
         // TODO multiline statements support (when the line ends with '\')
 
-        ctx_lineBegin = line.begin();
-
-        QChar const *lineIter = line.begin(); // how does it cast?
+        QChar const *lineIter = line.begin();
         QChar const * const lineEnd = line.end();
 
         skipWhiteSpace(lineEnd, lineIter);
-        // if (skipWhiteSpace(lineIter))
-        //     warnStatus(WhiteSpaceTrimmed);
-
-        LineType lineType = parseLineType(lineEnd, lineIter);
+        const LineType lineType = parseLineType(lineEnd, lineIter);
         skipWhiteSpace(lineEnd, lineIter);
-        // we can't discard the line now if lineIter >= lineEnd (no arguments provided)
-        // because there is single (!) token exists that does not take arguments.
-        // may be add its support in the future :)
-        // if (lineIter >= lineEnd)
-        //     errorStatus(ExpectedArguments);
 
-        Status status = STATUS_OK;
         switch (lineType) {
         case LINETYPE_COMMENT:
             continue;
 
         case LINETYPE_VERTEX_GEOMETRIC: {
             QVector3D vertexGeometric;
-            status = parseVertexGeometric(lineEnd, lineIter, vertexGeometric);
-            if (status != STATUS_OK) {
-                filePoint.column = (lineIter - line.begin());
-                return status;
-            }
+            parserStatus.status = parseVertexGeometric(lineEnd, lineIter, vertexGeometric);
+            if (parserStatus.status != STATUS_OK)
+                return parserStatus;
             outMesh.geometryVertices.append(vertexGeometric);
             break;
         }
 
         case LINETYPE_VERTEX_TEXTURE: {
             QVector2D vertexTexture;
-            status = parseVertexTexture(lineEnd, lineIter, vertexTexture);
-            if (status != STATUS_OK) {
-                filePoint.column = (lineIter - line.begin());
-                return status;
-            }
+            parserStatus.status = parseVertexTexture(lineEnd, lineIter, vertexTexture);
+            if (parserStatus.status != STATUS_OK)
+                return parserStatus;
             outMesh.textureVertices.append(vertexTexture);
             break;
         }
 
-        case LINETYPE_NORMAL_VERTEX:
-            // warnStatus(UnknownLineType);
+        case LINETYPE_NORMAL_VERTEX: {
+//            QVector3D normal;
+//            parserStatus.status = parseVertexGeometric(lineEnd, lineIter, normal);
+//            if (parserStatus.status != STATUS_OK)
+//                return parserStatus;
+//            outMesh.normals.append(normal);
             break;
+        }
 
         case LINETYPE_FACE: {
+            QVector<int> faceGeometric;
+            QVector<int> faceTexture;
+            parserStatus.status = parseFace(
+                    outMesh.geometryVertices.length(),
+                    outMesh.textureVertices.length(),
+                    lineEnd, lineIter,
+                    faceGeometric, faceTexture);
+            if (parserStatus.status != STATUS_OK)
+                return parserStatus;
+            outMesh.geometryFaces.append(faceGeometric);
+            outMesh.textureFaces.append(faceTexture);
             break;
         }
 
         case LINETYPE_UNKNOWN:
-            // warnStatus(UnknownLineType);
             break;
 
         default:
@@ -504,31 +343,28 @@ Parser::Status Parser::load(QTextStream &input, Mesh &outMesh)
         }
     }
 
-    // if (lineNumber == 0)
-    //     warnStatus(FileIsEmpty);
-
     return STATUS_OK;
 }
 
-Parser::FilePoint Parser::getFilePoint() const
-{
-    return filePoint;
-}
 
-Parser::Status Parser::load(QTextStream &&input, Mesh &outMesh)
+Parser::ParserStatus::ParserStatus(Status status):
+        lineNumber(0), columnNumber(0), status(status)
+{}
+
+Parser::ParserStatus::ParserStatus():
+        ParserStatus(STATUS_OK)
+{}
+
+Parser::ParserStatus Parser::load(QTextStream &&input, Mesh &outMesh)
 {
     return load(input, outMesh);
 }
 
-Parser::Status Parser::load(QString const &filename, Mesh &outMesh)
+Parser::ParserStatus Parser::load(QString const &filename, Mesh &outMesh)
 {
     QFile file(filename);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        return STATUS_ERROR_IO;
-
-    QTextStream input(&file);
-    if (input.atEnd())
-        return STATUS_WARN_IO_EMPTY;
+        return ParserStatus(STATUS_ERROR_INPUT);
 
     return load(input, outMesh);
 }
