@@ -12,6 +12,8 @@ class Mesh
 public:
     Mesh() = default;
 
+    void clear();
+
     QVector<QVector3D> geometryVertices;
     QVector<QVector<int>> geometryFaces;
     QVector<QVector2D> textureVertices;

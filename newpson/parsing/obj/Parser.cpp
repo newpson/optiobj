@@ -19,6 +19,7 @@ QString Parser::statusToString(Parser::Status const status)
     case STATUS_ERROR_EXPECTED_FLOAT: return "Float expected";
     case STATUS_ERROR_EXPECTED_INTEGER: return "Integer expected";
     case STATUS_ERROR_COMPONENTS_ASSYMETRY: return "Face components assymetry";
+    case STATUS_ERROR_UNDEFINED_INDEX: return "Undefined index";
     case STATUS_ERROR_INPUT: return "Error opening file";
     case STATUS_ERROR_INPUT_EMPTY: return "File is empty";
     default: return "Reserved state";
@@ -87,8 +88,9 @@ Parser::LineType Parser::parseLineType(QChar const * const lineEnd, QChar const 
             if (isNextCharEndOrSpace(lineEnd, lineIter))
                 return LINETYPE_VERTEX_TEXTURE;
         if (*lineIter == 'n')
-            if (isNextCharEndOrSpace(lineEnd, lineIter))
+            if (isNextCharEndOrSpace(lineEnd, lineIter)) {
                 return LINETYPE_NORMAL;
+            }
     }
 
     if (*lineIter == 'f')
@@ -303,13 +305,18 @@ Parser::Status Parser::parseFace(
                 hasIndexNormal, indexNormal);
     if (status != STATUS_OK)
         return status;
+    if (indexGeometric < 1 || indexGeometric > numVerticesGeometric)
+        return STATUS_ERROR_UNDEFINED_INDEX;
     outFaceGeometric.append(indexGeometric);
     if (hasIndexTexture) {
         mustHaveIndexTexture = true;
+        if (indexTexture < 1 || indexTexture > numVerticesTexture)
+            return STATUS_ERROR_UNDEFINED_INDEX;
         outFaceTexture.append(indexTexture);
     }
     if (hasIndexNormal) {
         mustHaveIndexNormal= true;
+        // TODO check index of normal
         outFaceNormal.append(indexNormal);
     }
 
@@ -321,13 +328,17 @@ Parser::Status Parser::parseFace(
                     hasIndexNormal, indexNormal);
         if (status != STATUS_OK)
             return status;
-
+        if (indexGeometric < 1 || indexGeometric > numVerticesGeometric)
+            return STATUS_ERROR_UNDEFINED_INDEX;
         outFaceGeometric.append(indexGeometric);
         if (mustHaveIndexTexture != hasIndexTexture
                 || mustHaveIndexNormal != hasIndexNormal)
             return STATUS_ERROR_COMPONENTS_ASSYMETRY;
-        if (hasIndexTexture)
+        if (hasIndexTexture) {
+            if (indexTexture < 1 || indexTexture > numVerticesTexture)
+                return STATUS_ERROR_UNDEFINED_INDEX;
             outFaceTexture.append(indexTexture);
+        }
         if (hasIndexNormal)
             outFaceNormal.append(indexNormal);
     }
@@ -340,12 +351,18 @@ Parser::Status Parser::parseFace(
                     hasIndexNormal, indexNormal);
        if (status != STATUS_OK)
            return status;
+       if (indexGeometric < 1 || indexGeometric > numVerticesGeometric)
+           return STATUS_ERROR_UNDEFINED_INDEX;
+       outFaceGeometric.append(indexGeometric);
 
        if (mustHaveIndexTexture != hasIndexTexture
                || mustHaveIndexNormal != hasIndexNormal)
            return STATUS_ERROR_COMPONENTS_ASSYMETRY;
-       if (hasIndexTexture)
+       if (hasIndexTexture) {
+           if (indexTexture < 1 || indexTexture > numVerticesTexture)
+               return STATUS_ERROR_UNDEFINED_INDEX;
            outFaceTexture.append(indexTexture);
+       }
        if (hasIndexNormal)
            outFaceNormal.append(indexNormal);
     }
@@ -356,6 +373,7 @@ Parser::Status Parser::parseFace(
 Parser::ParserState Parser::load(QTextStream &input, Mesh &outMesh)
 {
     ParserState parserState;
+    outMesh.clear();
 
     while (!input.atEnd()) {
         const QString line = input.readLine();
@@ -373,28 +391,23 @@ Parser::ParserState Parser::load(QTextStream &input, Mesh &outMesh)
 
         switch (lineType) {
         case LINETYPE_EMPTY:
-            qDebug() << "Empty line";
             continue;
         case LINETYPE_COMMENT:
-            qDebug() << "LINETYPE_COMMENT";
             continue;
 
         case LINETYPE_VERTEX_GEOMETRIC: {
-            qDebug() << "LINETYPE_VERTEX_GEOMETRIC";
             QVector3D vertexGeometric;
             parserState.status = parseVertexGeometric(lineEnd, lineIter, vertexGeometric);
             if (parserState.status != STATUS_OK) {
-                qDebug() << "At" << *lineIter;
                 parserState.columnNumber = lineIter - line.begin();
                 return parserState;
             }
             outMesh.geometryVertices.append(vertexGeometric);
-            qDebug() << vertexGeometric;
+            // qDebug() << vertexGeometric;
             break;
         }
 
         case LINETYPE_VERTEX_TEXTURE: {
-            qDebug() << "LINETYPE_VERTEX_TEXTURE";
             QVector2D vertexTexture;
             parserState.status = parseVertexTexture(lineEnd, lineIter, vertexTexture);
             if (parserState.status != STATUS_OK) {
@@ -402,24 +415,22 @@ Parser::ParserState Parser::load(QTextStream &input, Mesh &outMesh)
                 return parserState;
             }
             outMesh.textureVertices.append(vertexTexture);
-            qDebug() << vertexTexture;
+//            qDebug() << vertexTexture;
             break;
         }
 
         case LINETYPE_NORMAL: {
-            qDebug() << "LINETYPE_NORMAL";
-
             QVector3D normal;
             parserState.status = parseVertexGeometric(lineEnd, lineIter, normal);
-            if (parserState.status != STATUS_OK)
+            if (parserState.status != STATUS_OK) {
+                parserState.columnNumber = lineIter - line.begin();
                 return parserState;
-            qDebug() << normal;
+            }
+//            qDebug() << normal;
             break;
         }
 
         case LINETYPE_FACE: {
-            qDebug() << "LINETYPE_FACE";
-
             QVector<int> faceGeometric;
             QVector<int> faceTexture;
             QVector<int> faceNormal;
@@ -434,16 +445,14 @@ Parser::ParserState Parser::load(QTextStream &input, Mesh &outMesh)
             }
             outMesh.geometryFaces.append(faceGeometric);
             outMesh.textureFaces.append(faceTexture);
-            qDebug() << faceGeometric << faceTexture << faceNormal;
+//            qDebug() << faceGeometric << faceTexture << faceNormal;
             break;
         }
 
         case LINETYPE_UNKNOWN:
-            qDebug() << "LINETYPE_UNKNOWN";
             break;
 
         default:
-            qDebug() << "Broken state!";
             return STATUS_ERROR_STATE_BROKEN;
         }
     }

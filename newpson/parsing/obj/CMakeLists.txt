@@ -7,4 +7,4 @@ target_include_directories(Newpson_Parsing_OBJ_Parser
 target_link_libraries(Newpson_Parsing_OBJ_Parser
     PUBLIC Newpson_Mesh Qt5::Core)
 
-#add_subdirectory(test)
+add_subdirectory(test)
