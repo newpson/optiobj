@@ -11,16 +11,14 @@
 int main()
 {
     Newpson::Mesh mesh;
-    Newpson::Parsing::obj::Parser parser;
+    Newpson::Parsing::obj::Parser::ParserState parserStatus;
 
-    // auto status = parser.load(PROJECT_ASSETS "/error/invalid-indices/004.obj", mesh);
-    auto status = parser.load(PROJECT_ASSETS "/ok/cube.obj", mesh);
+    parserStatus = Newpson::Parsing::obj::Parser::load(PROJECT_ASSETS "/ok/suzanne.obj", mesh);
 
-    if (status != Newpson::Parsing::obj::Parser::STATUS_OK) {
-        Newpson::Parsing::obj::Parser::FilePoint filePoint = parser.getFilePoint();
-        qDebug() << Newpson::Parsing::obj::Parser::statusToString(status) << "at";
-        qDebug() << "line" << filePoint.line;
-        qDebug() << "column" << filePoint.column;
+    if (parserStatus.status != Newpson::Parsing::obj::Parser::STATUS_OK) {
+        qDebug() << Newpson::Parsing::obj::Parser::statusToString(parserStatus.status) << "at";
+        qDebug() << "line" << parserStatus.lineNumber;
+        qDebug() << "column" << parserStatus.columnNumber;
     } else {
         qDebug() << "Everything is fine";
     }

@@ -18,11 +18,11 @@ class Parser
 {
 public:
     enum LineType {
+        LINETYPE_EMPTY,
         LINETYPE_COMMENT,
         LINETYPE_VERTEX_GEOMETRIC,
         LINETYPE_VERTEX_TEXTURE,
-        // there is no any type of normals in .obj beside vertex normals; should we call this type just LINETYPE_NORMAL?
-        LINETYPE_NORMAL_VERTEX,
+        LINETYPE_NORMAL,
         LINETYPE_FACE,
         LINETYPE_UNKNOWN,
     };
@@ -44,6 +44,7 @@ public:
         STATUS_ERROR_STATE_BROKEN,
         STATUS_ERROR_EXPECTED_FLOAT,
         STATUS_ERROR_EXPECTED_INTEGER,
+        STATUS_ERROR_COMPONENTS_ASSYMETRY,
         STATUS_ERROR_INPUT,
         STATUS_ERROR_INPUT_EMPTY,
 
@@ -63,32 +64,34 @@ public:
         STATUS_RESERVED,
     };
 
-    struct ParserStatus
+    struct ParserState
     {
         Status status;
         int lineNumber;
         int columnNumber;
 
-        ParserStatus();
-        ParserStatus(Status status);
+        ParserState();
+        ParserState(Status status);
     };
 
     static QString statusToString(Status status);
     static Status statusType(Status const status);
 
-    static ParserStatus load(QTextStream &input, Mesh &outMesh);
-    static ParserStatus load(QTextStream &&input, Mesh &outMesh);
-    static ParserStatus load(QString const &filename, Mesh &outMesh);
+    static ParserState load(QTextStream &input, Mesh &outMesh);
+    static ParserState load(QTextStream &&input, Mesh &outMesh);
+    static ParserState load(QString const &filename, Mesh &outMesh);
 
 private:
     static bool isEndOrSpace(QChar const * const lineEnd, QChar const * const lineIter);
-
+    static bool hasMoreComponents(QChar const * const lineEnd, QChar const *&lineIter);
     static bool skipWhiteSpace(QChar const * const lineEnd, QChar const *&lineIter);
-    static void skipContent(QChar const * const lineEnd, QChar const *&lineIter);
+    static void skipUntilDelimiter(QChar const * const lineEnd, QChar const *&lineIter);
+    static void skipUntilContent(QChar const * const lineEnd, QChar const *&lineIter);
     static bool isNextCharEndOrSpace(QChar const * const lineEnd, QChar const *&lineIter);
 
     static LineType parseLineType(QChar const * const lineEnd, QChar const *&lineIter);
     static Status parseFloat(QChar const * const lineEnd, QChar const *&lineIter, float &outFloat);
+    static Status parseInteger(QChar const * const lineEnd, QChar const *&lineIter, int &outInteger);
     static Status parseVertexGeometric(QChar const * const lineEnd, QChar const *&lineIter, QVector3D &outVertex);
     static Status parseVertexTexture(QChar const * const lineEnd, QChar const *&lineIter, QVector2D &outVertex);
     static Status parseFace(
@@ -97,7 +100,16 @@ private:
             QChar const * const lineEnd,
             QChar const *&lineIter,
             QVector<int> &outFaceGeometric,
-            QVector<int> &outFaceTexture);
+            QVector<int> &outFaceTexture,
+            QVector<int> &outFaceNormal);
+    static Status parseFaceVertexComponents(
+            QChar const * const lineEnd,
+            QChar const *&lineIter,
+            int &indexGeometric,
+            bool &hasIndexTexture,
+            int &indexTexture,
+            bool &hasIndexNormal,
+            int &indexNormal);
 };
 
 } // namespace Newpson::Parsing::obj
