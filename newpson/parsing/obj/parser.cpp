@@ -1,5 +1,5 @@
-#include "Parser.hpp"
-#include "Mesh.hpp"
+#include "parser.hpp"
+#include "mesh.hpp"
 
 #include <QDebug>
 #include <QString>
@@ -9,7 +9,7 @@
 #include <QVector2D>
 #include <QVector3D>
 
-namespace Newpson::Parsing::obj {
+namespace Newpson::Parsing::OBJ {
 
 QString Parser::statusToString(Parser::Status const status)
 {

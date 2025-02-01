@@ -1,9 +1,9 @@
-#include "Parser.h"
+#include "parser.h"
 
 #include <QTest>
 
 int main()
 {
-    Newpson::Parsing::obj::Test::Parser test;
+    Newpson::Parsing::OBJ::Test::Parser test;
 	QTest::qExec(&test);
 }

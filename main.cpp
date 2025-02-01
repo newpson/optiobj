@@ -1,26 +1,26 @@
-#include "Mesh.hpp"
-#include "obj/Parser.hpp"
+#include "mesh.hpp"
+#include "obj/parser.hpp"
 
-#include <QVector>
-#include <QString>
-#include <QVector3D>
-#include <QVector2D>
 #include <QDebug>
 #include <QFile>
+#include <QString>
 #include <QTextStream>
+#include <QVector>
+#include <QVector3D>
+#include <QVector2D>
 
 int main()
 {
     Newpson::Mesh mesh;
-    Newpson::Parsing::obj::Parser::ParserState parserState;
+    Newpson::Parsing::OBJ::Parser::ParserState parserState;
 
-    parserState = Newpson::Parsing::obj::Parser::load(PROJECT_ASSETS "/ok/nefertiti.obj", mesh);
+    parserState = Newpson::Parsing::OBJ::Parser::load(PROJECT_ASSETS "/ok/nefertiti.obj", mesh);
 
-    qDebug() << Newpson::Parsing::obj::Parser::statusToString(parserState.status) << "at";
+    qDebug() << Newpson::Parsing::OBJ::Parser::statusToString(parserState.status) << "at";
     qDebug() << "line" << parserState.lineNumber;
     qDebug() << "column" << parserState.columnNumber;
 
-    if (parserState.status == Newpson::Parsing::obj::Parser::STATUS_OK) {
+    if (parserState.status == Newpson::Parsing::OBJ::Parser::STATUS_OK) {
         qDebug() << "Number of geometric vertices:" << mesh.geometryVertices.length();
         qDebug() << "Number of texture vertices:" << mesh.textureVertices.length();
         qDebug() << "Number of faces:" << mesh.geometryFaces.length();

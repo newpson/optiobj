@@ -1,7 +1,7 @@
 #ifndef NEWPSON_PARSING_OBJ_PARSER_H
 #define NEWPSON_PARSING_OBJ_PARSER_H
 
-#include "Mesh.hpp"
+#include "mesh.hpp"
 
 #include <QDebug>
 #include <QFile>
@@ -10,9 +10,7 @@
 #include <QVector2D>
 #include <QVector3D>
 
-
-//! REVIEW Obj
-namespace Newpson::Parsing::obj {
+namespace Newpson::Parsing::OBJ {
 
 class Parser
 {
