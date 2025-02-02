@@ -402,7 +402,7 @@ Parser::ParserState Parser::load(QTextStream &input, Mesh &outMesh)
                 parserState.columnNumber = lineIter - line.begin();
                 return parserState;
             }
-            outMesh.geometryVertices.append(vertexGeometric);
+            outMesh.addGeometry(vertexGeometric);
             // qDebug() << vertexGeometric;
             break;
         }
@@ -414,7 +414,7 @@ Parser::ParserState Parser::load(QTextStream &input, Mesh &outMesh)
                 parserState.columnNumber = lineIter - line.begin();
                 return parserState;
             }
-            outMesh.textureVertices.append(vertexTexture);
+            outMesh.addTexture(vertexTexture);
 //            qDebug() << vertexTexture;
             break;
         }
@@ -426,6 +426,7 @@ Parser::ParserState Parser::load(QTextStream &input, Mesh &outMesh)
                 parserState.columnNumber = lineIter - line.begin();
                 return parserState;
             }
+            outMesh.addNormal(normal);
 //            qDebug() << normal;
             break;
         }
@@ -433,18 +434,28 @@ Parser::ParserState Parser::load(QTextStream &input, Mesh &outMesh)
         case LINETYPE_FACE: {
             QVector<int> faceGeometric;
             QVector<int> faceTexture;
-            QVector<int> faceNormal;
+            QVector<int> faceNormals;
+            int components[3];
             parserState.status = parseFace(
-                    outMesh.geometryVertices.length(), // is not used for now
-                    outMesh.textureVertices.length(), // is not used for now
+                    outMesh.numGeometry(),
+                    outMesh.numTextures(),
                     lineEnd, lineIter,
-                    faceGeometric, faceTexture, faceNormal);
+                    faceGeometric, faceTexture, faceNormals);
             if (parserState.status != STATUS_OK) {
                 parserState.columnNumber = lineIter - line.begin();
                 return parserState;
             }
-            outMesh.geometryFaces.append(faceGeometric);
-            outMesh.textureFaces.append(faceTexture);
+            const bool hasTextures = faceTexture.length() > 0;
+            const bool hasNormals = faceNormals.length() > 0;
+            const int faceIndex = outMesh.addFace(hasTextures, hasNormals);
+            for (int i = 0; i < faceGeometric.length(); ++i)
+            {
+                outMesh.addFaceComponentGeometry(faceIndex, faceGeometric[i]);
+                if (hasTextures)
+                    outMesh.addFaceComponentTexture(faceIndex, faceTexture[i]);
+                if (hasNormals)
+                    outMesh.addFaceComponentNormal(faceIndex, faceNormals[i]);
+            }
 //            qDebug() << faceGeometric << faceTexture << faceNormal;
             break;
         }
@@ -457,10 +468,9 @@ Parser::ParserState Parser::load(QTextStream &input, Mesh &outMesh)
         }
     }
 
-    if (outMesh.geometryVertices.length() == 0
-            && outMesh.textureVertices.length() == 0
-            && outMesh.geometryFaces.length() == 0
-            && outMesh.textureFaces.length() == 0)
+    if (outMesh.numGeometry() == 0
+        && outMesh.numTextures() == 0
+        && outMesh.numNormals() == 0)
         parserState.status = STATUS_ERROR_INPUT_EMPTY;
 
     return parserState;

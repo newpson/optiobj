@@ -118,9 +118,9 @@ private slots:
         Newpson::Parsing::OBJ::Parser::Status errorCode = Newpson::Parsing::OBJ::Parser::STATUS_OK;
         // Values were verified in blender, link to model https://free3d.com/3d-model/bugatti-chiron-2017-model-31847.html
         QVERIFY(Newpson::Parsing::OBJ::Parser::load(PROJECT_ASSETS "/big/bugatti.obj", mesh).status == errorCode);
-        qDebug() << mesh.geometryVertices.length(); // 744213
-        QVERIFY(mesh.geometryVertices.length() == 744211); // ? does not pass; may be blender truncates some of the vertices? TODO
-        QVERIFY(mesh.geometryFaces.length() == 759373); // OK
+        qDebug() << mesh.numGeometry(); // 744213
+        QVERIFY(mesh.numTextures() == 744211); // ? does not pass; may be blender truncates some of the vertices? TODO
+        QVERIFY(mesh.numFaces() == 759373); // OK
     }
 };
 
