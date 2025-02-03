@@ -3,90 +3,84 @@
 
 namespace Newpson  {
 
-void Mesh::clear()
+Mesh::Mesh(
+    const QVector<QVector3D> &geometry,
+    const QVector<QVector2D> &textures,
+    const QVector<QVector3D> &normals,
+    const QVector<int> &indicesGeometry,
+    const QVector<int> &indicesTextures,
+    const QVector<int> &indicesNormals,
+    const QVector<int> &facesGeometry,
+    const QVector<int> &facesTextures,
+    const QVector<int> &facesNormals,
+    const QVector<int> &polyGroups):
+
+    m_vertices(geometry),
+    m_verticesTexture(textures),
+    m_normals(normals),
+    m_indicesVertices(indicesGeometry),
+    m_indicesVerticesTexture(indicesTextures),
+    m_indicesNormals(indicesNormals),
+    m_facesGeometry(facesGeometry),
+    m_facesTextures(facesTextures),
+    m_facesNormals(facesNormals),
+    m_polyGroups(polyGroups)
+{}
+
+// make verbose name + is...
+bool Mesh::validate() const
 {
-    geometry.clear();
-    textures.clear();
-    normals.clear();
-
-    indicesGeometry.clear();
-    indicesTextures.clear();
-    indicesNormals.clear();
-    facesGeometry.clear();
-    facesTextures.clear();
-    facesNormals.clear();
-
-    faceGroups.clear();
+    return true;
 }
 
-void Mesh::addGeometry(const QVector3D &vertex)
+const QVector<QVector3D> &Mesh::vertices() const
 {
-    geometry.append(vertex);
+    return m_vertices;
 }
 
-void Mesh::addTexture(const QVector2D &vertex)
+const QVector<QVector2D> &Mesh::verticesTexture() const
 {
-    textures.append(vertex);
+    return m_verticesTexture;
 }
 
-void Mesh::addNormal(const QVector3D &normal)
+const QVector<QVector3D> &Mesh::normals() const
 {
-    normals.append(normal);
+    return m_normals;
 }
 
-int Mesh::addFace(const bool hasTextures, const bool hasNormals)
+const QVector<int> &Mesh::indicesVertices() const
 {
-    facesGeometry.append(indicesGeometry.length());
-    facesTextures.append(hasTextures ? indicesTextures.length() : -1);
-    facesNormals.append(hasNormals ? indicesNormals.length() : -1);
-    return (facesGeometry.length() - 1);
+    return m_indicesVertices;
 }
 
-void Mesh::addFaceComponentGeometry(const int faceIndex, const int indexGeometry)
+const QVector<int> &Mesh::indicesVerticesTexture() const
 {
-    Q_ASSERT(faceIndex < facesGeometry.length());
-    if (indexGeometry > 0)
-        indicesGeometry.append(indexGeometry - 1);
-    else if (indexGeometry < 0)
-        indicesGeometry.append(normals.length() + indexGeometry);
+    return m_indicesVerticesTexture;
 }
 
-void Mesh::addFaceComponentTexture(const int faceIndex, const int indexTexture)
+const QVector<int> &Mesh::indicesNormals() const
 {
-    Q_ASSERT(faceIndex < facesTextures.length());
-    if (indexTexture > 0)
-        indicesTextures.append(indexTexture - 1);
-    else if (indexTexture < 0)
-        indicesTextures.append(normals.length() + indexTexture);
+    return m_indicesNormals;
 }
 
-void Mesh::addFaceComponentNormal(const int faceIndex, const int indexNormal)
+const QVector<int> &Mesh::facesVertices() const
 {
-    Q_ASSERT(faceIndex < facesNormals.length());
-    if (indexNormal > 0)
-        indicesNormals.append(indexNormal - 1);
-    else if (indexNormal < 0)
-        indicesNormals.append(normals.length() + indexNormal);
+    return m_facesGeometry;
 }
 
-int Mesh::numGeometry() const
+const QVector<int> &Mesh::facesVerticesTexture() const
 {
-    return geometry.length();
+    return m_facesTextures;
 }
 
-int Mesh::numTextures() const
+const QVector<int> &Mesh::facesNormals() const
 {
-    return textures.length();
+    return m_facesNormals;
 }
 
-int Mesh::numNormals() const
+const QVector<int> &Mesh::polyGroups() const
 {
-    return normals.length();
-}
-
-int Mesh::numFaces() const
-{
-    return facesGeometry.length();
+    return m_facesTextures;
 }
 
 } // namespace Newpson

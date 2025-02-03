@@ -7,37 +7,47 @@
 
 namespace Newpson {
 
+// should be immutable
 class Mesh
 {
 public:
     Mesh() = default;
+    Mesh(
+        const QVector<QVector3D> &vertices,
+        const QVector<QVector2D> &verticesTexture,
+        const QVector<QVector3D> &normals,
+        const QVector<int> &indicesVertices,
+        const QVector<int> &indicesVerticesTexture,
+        const QVector<int> &indicesNormals,
+        const QVector<int> &facesVertices,
+        const QVector<int> &facesVerticesTexture,
+        const QVector<int> &facesNormals,
+        const QVector<int> &polyGroups);
 
-    void clear();
+    const QVector<QVector3D> &vertices() const;
+    const QVector<QVector2D> &verticesTexture() const;
+    const QVector<QVector3D> &normals() const;
+    const QVector<int> &indicesVertices() const;
+    const QVector<int> &indicesVerticesTexture() const;
+    const QVector<int> &indicesNormals() const;
+    const QVector<int> &facesVertices() const;
+    const QVector<int> &facesVerticesTexture() const;
+    const QVector<int> &facesNormals() const;
+    const QVector<int> &polyGroups() const;
 
-    void addGeometry(const QVector3D &vertex);
-    void addTexture(const QVector2D &vertex);
-    void addNormal(const QVector3D &normal);
-    int addFace(const bool hasTextures, const bool hasNormals);
-    void addFaceComponentGeometry(const int faceIndex, const int indexGeometry);
-    void addFaceComponentTexture(const int faceIndex, const int indexTexture);
-    void addFaceComponentNormal(const int faceIndex, const int indexNormal);
-    int numGeometry() const;
-    int numTextures() const;
-    int numNormals() const;
-    int numFaces() const;
+    bool validate() const;
 
-    QVector<QVector3D> geometry;
-    QVector<QVector2D> textures;
-    QVector<QVector3D> normals;
-
-    QVector<int> indicesGeometry;
-    QVector<int> indicesTextures;
-    QVector<int> indicesNormals;
-    QVector<int> facesGeometry;
-    QVector<int> facesTextures;
-    QVector<int> facesNormals;
-
-    QVector<int> faceGroups; // unimplemented
+private:
+    QVector<QVector3D> m_vertices;
+    QVector<QVector2D> m_verticesTexture;
+    QVector<QVector3D> m_normals;
+    QVector<int> m_indicesVertices;
+    QVector<int> m_indicesVerticesTexture;
+    QVector<int> m_indicesNormals;
+    QVector<int> m_facesGeometry;
+    QVector<int> m_facesTextures;
+    QVector<int> m_facesNormals;
+    QVector<int> m_polyGroups;
 };
 
 }

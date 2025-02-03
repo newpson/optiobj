@@ -11,34 +11,32 @@
 
 int main()
 {
-    Newpson::Mesh mesh;
-    Newpson::Parsing::OBJ::Parser::ParserState parserState;
+    Newpson::Parsing::Obj::ParserResult parserResult;
 
-    parserState = Newpson::Parsing::OBJ::Parser::load(PROJECT_ASSETS "/ok/cube-semifull.obj", mesh);
+    Newpson::Mesh mesh = Newpson::Parsing::Obj::load(PROJECT_ASSETS "/ok/cube.obj", parserResult);
 
-    qDebug() << Newpson::Parsing::OBJ::Parser::statusToString(parserState.status) << "at";
-    qDebug() << "line" << parserState.lineNumber;
-    qDebug() << "column" << parserState.columnNumber;
+    qDebug() << Newpson::Parsing::Obj::statusToString(parserResult.status) << "at";
+    qDebug() << "line" << parserResult.lineNumber;
+    qDebug() << "column" << parserResult.columnNumber;
 
-    if (parserState.status == Newpson::Parsing::OBJ::Parser::STATUS_OK) {
+    if (parserResult.status == Newpson::Parsing::Obj::STATUS_OK) {
         qDebug() << "[Parsing stats]";
-        qDebug() << "Number of geometric vertices:" << mesh.numGeometry();
-        qDebug() << "Number of texture vertices:" << mesh.numTextures();
-        qDebug() << "Number of normals:" << mesh.numNormals();
-        qDebug() << "Number of faces:" << mesh.numFaces();
-        qDebug() << "[Overall mesh data]";
-        qDebug() << "geometry:" << mesh.geometry;
-        qDebug() << "textures:" << mesh.textures;
-        qDebug() << "normals:" << mesh.normals;
-        qDebug() << "indicesGeometry:" << mesh.indicesGeometry;
-        qDebug() << "indeicesTextures:" << mesh.indicesTextures;
-        qDebug() << "indeicesNormals:" << mesh.indicesNormals;
-        qDebug() << "facesGeometry:" << mesh.facesGeometry;
-        qDebug() << "facesTextures:" << mesh.facesTextures;
-        qDebug() << "facesNormals:" << mesh.facesNormals;
+        qDebug() << "Number of geometric vertices:" << mesh.vertices().length();
+        qDebug() << "Number of texture vertices:" << mesh.verticesTexture().length();
+        qDebug() << "Number of normals:" << mesh.normals().length();
+        qDebug() << "Number of faces:" << mesh.facesVertices().length();
     }
-
-
+    //        qDebug() << "[Overall mesh data]";
+    //        qDebug() << "geometry:" << mesh.geometry;
+    //        qDebug() << "textures:" << mesh.textures;
+    //        qDebug() << "normals:" << mesh.normals;
+    //        qDebug() << "indicesGeometry:" << mesh.indicesGeometry;
+    //        qDebug() << "indeicesTextures:" << mesh.indicesTextures;
+    //        qDebug() << "indeicesNormals:" << mesh.indicesNormals;
+    //        qDebug() << "facesGeometry:" << mesh.facesGeometry;
+    //        qDebug() << "facesTextures:" << mesh.facesTextures;
+    //        qDebug() << "facesNormals:" << mesh.facesNormals;
+    //    }
 
     return 0;
 }

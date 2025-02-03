@@ -9,16 +9,16 @@
 #include <QVector2D>
 #include <QVector3D>
 
-namespace Newpson::Parsing::OBJ {
+namespace Newpson::Parsing::Obj {
 
-QString Parser::statusToString(Parser::Status const status)
+QString statusToString(Status const status)
 {
     switch (status) {
     case STATUS_OK: return "OK";
     case STATUS_ERROR_STATE_BROKEN: return "State broken";
     case STATUS_ERROR_EXPECTED_FLOAT: return "Float expected";
     case STATUS_ERROR_EXPECTED_INTEGER: return "Integer expected";
-    case STATUS_ERROR_COMPONENTS_ASSYMETRY: return "Face components assymetry";
+    case STATUS_ERROR_COMPONENTS_INCOHERENCE: return "Face components assymetry";
     case STATUS_ERROR_UNDEFINED_INDEX: return "Undefined index";
     case STATUS_ERROR_INPUT: return "Error opening file";
     case STATUS_ERROR_INPUT_EMPTY: return "File is empty";
@@ -26,7 +26,7 @@ QString Parser::statusToString(Parser::Status const status)
     }
 }
 
-Parser::Status Parser::statusType(Parser::Status const status)
+Status statusType(Status const status)
 {
     bool const isVerbose = (status > STATUS_DEBUG_BEGIN && status < STATUS_DEBUG_END);
     if (isVerbose)
@@ -39,7 +39,9 @@ Parser::Status Parser::statusType(Parser::Status const status)
     return STATUS_RESERVED;
 }
 
-bool Parser::skipWhiteSpace(QChar const * const lineEnd, QChar const *&lineIter)
+namespace Internal {
+
+bool skipWhiteSpace(QChar const * const lineEnd, QChar const *&lineIter)
 {
     QChar const *begin = lineIter;
     while (lineIter < lineEnd && lineIter->isSpace())
@@ -48,30 +50,30 @@ bool Parser::skipWhiteSpace(QChar const * const lineEnd, QChar const *&lineIter)
     return hasSkipped;
 }
 
-void Parser::skipUntilContent(QChar const * const lineEnd, QChar const *&lineIter)
+void skipUntilContent(QChar const * const lineEnd, QChar const *&lineIter)
 {
     while (lineIter < lineEnd && (lineIter->isSpace() || *lineIter == '/'))
         ++lineIter;
 }
 
-void Parser::skipUntilDelimiter(QChar const * const lineEnd, QChar const *&lineIter)
+void skipUntilDelimiter(QChar const * const lineEnd, QChar const *&lineIter)
 {
     while (lineIter < lineEnd && !(lineIter->isSpace() || *lineIter == '/'))
         ++lineIter;
 }
 
-bool Parser::isEndOrSpace(QChar const * const lineEnd, QChar const * const lineIter)
+bool isEndOrSpace(QChar const * const lineEnd, QChar const * const lineIter)
 {
     return (lineIter >= lineEnd || lineIter->isSpace());
 }
 
-bool Parser::isNextCharEndOrSpace(QChar const * const lineEnd, QChar const *&lineIter)
+bool isNextCharEndOrSpace(QChar const * const lineEnd, QChar const *&lineIter)
 {
     ++lineIter;
     return isEndOrSpace(lineEnd, lineIter);
 }
 
-Parser::LineType Parser::parseLineType(QChar const * const lineEnd, QChar const *&lineIter)
+LineType parseLineType(QChar const * const lineEnd, QChar const *&lineIter)
 {
     skipWhiteSpace(lineEnd, lineIter);
 
@@ -101,7 +103,7 @@ Parser::LineType Parser::parseLineType(QChar const * const lineEnd, QChar const 
 }
 
 
-Parser::Status Parser::parseInteger(
+Status parseInteger(
         QChar const * const lineEnd,
         QChar const *&lineIter,
         int &outInteger)
@@ -124,7 +126,7 @@ Parser::Status Parser::parseInteger(
     return STATUS_OK;
 }
 
-Parser::Status Parser::parseFloat(
+Status parseFloat(
         QChar const * const lineEnd,
         QChar const *&lineIter,
         float &outFloat)
@@ -147,7 +149,7 @@ Parser::Status Parser::parseFloat(
     return STATUS_OK;
 }
 
-Parser::Status Parser::parseVertexGeometric(
+Status parseVertexGeometric(
         QChar const * const lineEnd,
         QChar const *&lineIter,
         QVector3D &outVertex)
@@ -165,7 +167,7 @@ Parser::Status Parser::parseVertexGeometric(
     return status;
 }
 
-Parser::Status Parser::parseVertexTexture(
+Status parseVertexTexture(
         QChar const * const lineEnd,
         QChar const *&lineIter,
         QVector2D &outVertex)
@@ -183,7 +185,7 @@ Parser::Status Parser::parseVertexTexture(
     return status;
 }
 
-Parser::Status Parser::parseFaceVertexComponents(
+Status parseFaceVertexComponents(
         QChar const * const lineEnd,
         QChar const *&lineIter,
         int &indexGeometric,
@@ -194,11 +196,11 @@ Parser::Status Parser::parseFaceVertexComponents(
 {
     /* All possible cases
      * case #1: 1
-     * case #2: 1/
-     * case #3: 1//
+     * case #2: 1/ (illegal)
+     * case #3: 1// (illegal)
      * case #4: 1//1
      * case #5: 1/1
-     * case #6: 1/1/
+     * case #6: 1/1/ (illegal)
      * case #7: 1/1/1
      */
     skipWhiteSpace(lineEnd, lineIter);
@@ -279,7 +281,7 @@ Parser::Status Parser::parseFaceVertexComponents(
     return status;
 }
 
-Parser::Status Parser::parseFace(
+Status parseFace(
         int numVerticesGeometric,
         int numVerticesTexture,
         QChar const * const lineEnd,
@@ -333,7 +335,7 @@ Parser::Status Parser::parseFace(
         outFaceGeometric.append(indexGeometric);
         if (mustHaveIndexTexture != hasIndexTexture
                 || mustHaveIndexNormal != hasIndexNormal)
-            return STATUS_ERROR_COMPONENTS_ASSYMETRY;
+            return STATUS_ERROR_COMPONENTS_INCOHERENCE;
         if (hasIndexTexture) {
             if (indexTexture < 1 || indexTexture > numVerticesTexture)
                 return STATUS_ERROR_UNDEFINED_INDEX;
@@ -357,7 +359,7 @@ Parser::Status Parser::parseFace(
 
        if (mustHaveIndexTexture != hasIndexTexture
                || mustHaveIndexNormal != hasIndexNormal)
-           return STATUS_ERROR_COMPONENTS_ASSYMETRY;
+           return STATUS_ERROR_COMPONENTS_INCOHERENCE;
        if (hasIndexTexture) {
            if (indexTexture < 1 || indexTexture > numVerticesTexture)
                return STATUS_ERROR_UNDEFINED_INDEX;
@@ -370,14 +372,26 @@ Parser::Status Parser::parseFace(
     return status;
 }
 
-Parser::ParserState Parser::load(QTextStream &input, Mesh &outMesh)
+} // namespace Internal
+
+Mesh load(QTextStream &input, ParserResult &parserResult)
 {
-    ParserState parserState;
-    outMesh.clear();
+    using namespace Internal;
+
+    QVector<QVector3D> vertices;
+    QVector<QVector2D> verticesTexture;
+    QVector<QVector3D> normals;
+    QVector<int> indicesVertices;
+    QVector<int> indicesVerticesTexture;
+    QVector<int> indicesNormals;
+    QVector<int> facesVertices;
+    QVector<int> facesVerticesTexture;
+    QVector<int> facesNormals;
+    QVector<int> polyGroups;
 
     while (!input.atEnd()) {
         const QString line = input.readLine();
-        ++parserState.lineNumber;
+        ++parserResult.lineNumber;
 
         if (line.isEmpty())
             continue;
@@ -396,67 +410,69 @@ Parser::ParserState Parser::load(QTextStream &input, Mesh &outMesh)
             continue;
 
         case LINETYPE_VERTEX_GEOMETRIC: {
-            QVector3D vertexGeometric;
-            parserState.status = parseVertexGeometric(lineEnd, lineIter, vertexGeometric);
-            if (parserState.status != STATUS_OK) {
-                parserState.columnNumber = lineIter - line.begin();
-                return parserState;
+            QVector3D vertex;
+            parserResult.status = parseVertexGeometric(lineEnd, lineIter, vertex);
+            if (parserResult.status != STATUS_OK) {
+                parserResult.columnNumber = lineIter - line.begin();
+                return Mesh();
             }
-            outMesh.addGeometry(vertexGeometric);
-            // qDebug() << vertexGeometric;
+            vertices.append(vertex);
             break;
         }
 
         case LINETYPE_VERTEX_TEXTURE: {
-            QVector2D vertexTexture;
-            parserState.status = parseVertexTexture(lineEnd, lineIter, vertexTexture);
-            if (parserState.status != STATUS_OK) {
-                parserState.columnNumber = lineIter - line.begin();
-                return parserState;
+            QVector2D vertex;
+            parserResult.status = parseVertexTexture(lineEnd, lineIter, vertex);
+            if (parserResult.status != STATUS_OK) {
+                parserResult.columnNumber = lineIter - line.begin();
+                return Mesh();
             }
-            outMesh.addTexture(vertexTexture);
-//            qDebug() << vertexTexture;
+            verticesTexture.append(vertex);
             break;
         }
 
         case LINETYPE_NORMAL: {
             QVector3D normal;
-            parserState.status = parseVertexGeometric(lineEnd, lineIter, normal);
-            if (parserState.status != STATUS_OK) {
-                parserState.columnNumber = lineIter - line.begin();
-                return parserState;
+            parserResult.status = parseVertexGeometric(lineEnd, lineIter, normal);
+            if (parserResult.status != STATUS_OK) {
+                parserResult.columnNumber = lineIter - line.begin();
+                return Mesh();
             }
-            outMesh.addNormal(normal);
-//            qDebug() << normal;
+            normals.append(normal);
             break;
         }
 
         case LINETYPE_FACE: {
-            QVector<int> faceGeometric;
-            QVector<int> faceTexture;
+            QVector<int> faceVertices;
+            QVector<int> faceVerticesTexture;
             QVector<int> faceNormals;
+
             int components[3];
-            parserState.status = parseFace(
-                    outMesh.numGeometry(),
-                    outMesh.numTextures(),
+            parserResult.status = parseFace(
+                    vertices.length(),
+                    verticesTexture.length(),
                     lineEnd, lineIter,
-                    faceGeometric, faceTexture, faceNormals);
-            if (parserState.status != STATUS_OK) {
-                parserState.columnNumber = lineIter - line.begin();
-                return parserState;
+                    faceVertices, faceVerticesTexture, faceNormals);
+            if (parserResult.status != STATUS_OK) {
+                parserResult.columnNumber = lineIter - line.begin();
+                return Mesh();
             }
-            const bool hasTextures = faceTexture.length() > 0;
+
+            const bool hasTextures = faceVerticesTexture.length() > 0;
             const bool hasNormals = faceNormals.length() > 0;
-            const int faceIndex = outMesh.addFace(hasTextures, hasNormals);
-            for (int i = 0; i < faceGeometric.length(); ++i)
+
+            facesVertices.append(indicesVertices.length());
+            facesVerticesTexture.append(hasTextures ? indicesVerticesTexture.length() : -1);
+            facesNormals.append(hasNormals ? indicesNormals.length() : -1);
+
+            for (int i = 0; i < faceVertices.length(); ++i)
             {
-                outMesh.addFaceComponentGeometry(faceIndex, faceGeometric[i]);
+                indicesVertices.append(faceVertices[i] - 1);
                 if (hasTextures)
-                    outMesh.addFaceComponentTexture(faceIndex, faceTexture[i]);
+                    indicesVerticesTexture.append(faceVerticesTexture[i] - 1);
                 if (hasNormals)
-                    outMesh.addFaceComponentNormal(faceIndex, faceNormals[i]);
+                    indicesNormals.append(faceNormals[i] - 1);
             }
-//            qDebug() << faceGeometric << faceTexture << faceNormal;
             break;
         }
 
@@ -464,40 +480,52 @@ Parser::ParserState Parser::load(QTextStream &input, Mesh &outMesh)
             break;
 
         default:
-            return STATUS_ERROR_STATE_BROKEN;
+            parserResult.status = STATUS_ERROR_INPUT_EMPTY;
+            return Mesh();
         }
     }
 
-    if (outMesh.numGeometry() == 0
-        && outMesh.numTextures() == 0
-        && outMesh.numNormals() == 0)
-        parserState.status = STATUS_ERROR_INPUT_EMPTY;
+    if (vertices.length() == 0
+        && verticesTexture.length() == 0
+        && normals.length() == 0)
+        parserResult.status = STATUS_ERROR_INPUT_EMPTY;
 
-    return parserState;
+    return Mesh(
+        vertices,
+        verticesTexture,
+        normals,
+        indicesVertices,
+        indicesVerticesTexture,
+        indicesNormals,
+        facesVertices,
+        facesVerticesTexture,
+        facesNormals,
+        polyGroups);
 }
 
-
-Parser::ParserState::ParserState(Status status):
+ParserResult::ParserResult(Status status):
         lineNumber(0), columnNumber(0), status(status)
 {}
 
-Parser::ParserState::ParserState():
-        ParserState(STATUS_OK)
+ParserResult::ParserResult():
+        ParserResult(STATUS_OK)
 {}
 
-Parser::ParserState Parser::load(QTextStream &&input, Mesh &outMesh)
+Mesh load(QTextStream &&input, ParserResult &parserResult)
 {
-    return load(input, outMesh);
+    return load(input, parserResult);
 }
 
-Parser::ParserState Parser::load(QString const &filename, Mesh &outMesh)
+Mesh load(QString const &filename, ParserResult &parserResult)
 {
     QFile file(filename);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
-        return ParserState(STATUS_ERROR_INPUT);
-    QTextStream input(&file);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        parserResult.status = STATUS_ERROR_INPUT;
+        return Mesh();
+    }
 
-    return load(input, outMesh);
+    QTextStream input(&file);
+    return load(input, parserResult);
 }
 
 } // namespace Newpson::Parser::OBJ
