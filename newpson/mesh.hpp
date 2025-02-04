@@ -35,7 +35,7 @@ public:
     const QVector<int> &facesNormals() const;
     const QVector<int> &polyGroups() const;
 
-    bool validate() const;
+    bool isValid() const;
 
 private:
     QVector<QVector3D> m_vertices;
@@ -44,8 +44,8 @@ private:
     QVector<int> m_indicesVertices;
     QVector<int> m_indicesVerticesTexture;
     QVector<int> m_indicesNormals;
-    QVector<int> m_facesGeometry;
-    QVector<int> m_facesTextures;
+    QVector<int> m_facesVertices;
+    QVector<int> m_facesVerticesTexture;
     QVector<int> m_facesNormals;
     QVector<int> m_polyGroups;
 };

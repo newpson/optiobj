@@ -22,7 +22,7 @@ QString statusToString(Status const status)
     case STATUS_ERROR_UNDEFINED_INDEX: return "Undefined index";
     case STATUS_ERROR_INPUT: return "Error opening file";
     case STATUS_ERROR_INPUT_EMPTY: return "File is empty";
-    default: return "Reserved sta7te";
+    default: return "0xDEADBEEF";
     }
 }
 
@@ -104,17 +104,17 @@ LineType parseLineType(QChar const * const lineEnd, QChar const *&lineIter)
 
 
 Status parseInteger(
-        QChar const * const lineEnd,
-        QChar const *&lineIter,
+        const QChar * const lineEnd,
+        const QChar *&lineIter,
         int &outInteger)
 {
 //    skipWhiteSpace(lineEnd, lineIter);
 //    if (isEndOrSpace(lineEnd, lineIter))
 //        return STATUS_ERROR_EXPECTED_FLOAT;
 
-    QChar const * const contentBegin = lineIter;
+    const QChar * const contentBegin = lineIter;
     skipUntilDelimiter(lineEnd, lineIter);
-    QStringView content(contentBegin, lineIter);
+    const QStringView content(contentBegin, lineIter);
 
     bool isParseSuccessful = false;
     outInteger = content.toInt(&isParseSuccessful);
@@ -127,17 +127,17 @@ Status parseInteger(
 }
 
 Status parseFloat(
-        QChar const * const lineEnd,
-        QChar const *&lineIter,
+        const QChar * const lineEnd,
+        const QChar *&lineIter,
         float &outFloat)
 {
     skipWhiteSpace(lineEnd, lineIter);
     if (isEndOrSpace(lineEnd, lineIter))
         return STATUS_ERROR_EXPECTED_FLOAT;
 
-    QChar const * const contentBegin = lineIter;
+    const QChar * const contentBegin = lineIter;
     skipUntilDelimiter(lineEnd, lineIter);
-    QStringView content(contentBegin, lineIter);
+    const QStringView content(contentBegin, lineIter);
 
     bool isParseSuccessful = false;
     outFloat = content.toFloat(&isParseSuccessful);
@@ -287,9 +287,11 @@ Status parseFace(
         const int numNormals,
         QChar const * const lineEnd,
         QChar const *&lineIter,
-        QVector<int> &outFaceGeometric,
-        QVector<int> &outFaceTexture,
-        QVector<int> &outFaceNormal)
+        bool &hasVerticesTexture,
+        bool &hasNormals,
+        QVector<int> &outFacesVertices,
+        QVector<int> &outFacesVerticesTexture,
+        QVector<int> &outFacesNormals)
 {
     int indexVertex = 0;
     bool mustHaveIndexTexture = false;
@@ -310,18 +312,20 @@ Status parseFace(
         return status;
     if (indexVertex == 0 || indexVertex > numVertices)
         return STATUS_ERROR_UNDEFINED_INDEX;
-    outFaceGeometric.append(indexVertex);
+    outFacesVertices.append(indexVertex - 1);
     if (hasIndexTexture) {
         mustHaveIndexTexture = true;
+        hasVerticesTexture = true;
         if (indexVertexTexture == 0 || indexVertexTexture > numVerticesTexture)
             return STATUS_ERROR_UNDEFINED_INDEX;
-        outFaceTexture.append(indexVertexTexture);
+        outFacesVerticesTexture.append(indexVertexTexture - 1);
     }
     if (hasIndexNormal) {
         mustHaveIndexNormal= true;
+        hasNormals = true;
         if (indexNormal == 0 || indexNormal > numNormals)
              return STATUS_ERROR_UNDEFINED_INDEX;
-        outFaceNormal.append(indexNormal);
+        outFacesNormals.append(indexNormal - 1);
     }
 
     for (int i = 0; i < 2; ++i) {
@@ -334,22 +338,21 @@ Status parseFace(
             return status;
         if (indexVertex == 0 || indexVertex > numVertices)
             return STATUS_ERROR_UNDEFINED_INDEX;
-        outFaceGeometric.append(indexVertex);
+        outFacesVertices.append(indexVertex - 1);
         if (mustHaveIndexTexture != hasIndexTexture
                 || mustHaveIndexNormal != hasIndexNormal)
             return STATUS_ERROR_COMPONENTS_INCOHERENCE;
         if (hasIndexTexture) {
             if (indexVertexTexture == 0 || indexVertexTexture > numVerticesTexture)
                 return STATUS_ERROR_UNDEFINED_INDEX;
-            outFaceTexture.append(indexVertexTexture);
+            outFacesVerticesTexture.append(indexVertexTexture - 1);
         }
-        if (hasIndexNormal)
+        if (hasIndexNormal) {
             if (indexNormal == 0 || indexNormal > numNormals)
                  return STATUS_ERROR_UNDEFINED_INDEX;
-            outFaceNormal.append(indexNormal);
+            outFacesNormals.append(indexNormal - 1);
+        }
     }
-
-    qDebug() << "Current position from end:" << lineEnd - lineIter;
 
     while (lineIter != lineEnd) {
         skipWhiteSpace(lineEnd, lineIter);
@@ -364,7 +367,7 @@ Status parseFace(
            return status;
        if (indexVertex == 0 || indexVertex > numVertices)
            return STATUS_ERROR_UNDEFINED_INDEX;
-       outFaceGeometric.append(indexVertex);
+       outFacesVertices.append(indexVertex - 1);
 
        if (mustHaveIndexTexture != hasIndexTexture
                || mustHaveIndexNormal != hasIndexNormal)
@@ -372,12 +375,13 @@ Status parseFace(
        if (hasIndexTexture) {
            if (indexVertexTexture == 0 || indexVertexTexture > numVerticesTexture)
                return STATUS_ERROR_UNDEFINED_INDEX;
-           outFaceTexture.append(indexVertexTexture);
+           outFacesVerticesTexture.append(indexVertexTexture - 1);
        }
-       if (hasIndexNormal)
+       if (hasIndexNormal) {
            if (indexNormal == 0 || indexNormal > numNormals)
                 return STATUS_ERROR_UNDEFINED_INDEX;
-           outFaceNormal.append(indexNormal);
+           outFacesNormals.append(indexNormal - 1);
+       }
     }
 
     return status;
@@ -455,23 +459,23 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
 
         case LINETYPE_FACE: {
             int components[3];
+            bool hasVerticesTexture = false;
+            bool hasNormals = false;
             parserResult.status = parseFace(
                     vertices.length(),
                     verticesTexture.length(),
                     normals.length(),
                     lineEnd, lineIter,
+                    hasVerticesTexture, hasNormals,
                     indicesVertices, indicesVerticesTexture, indicesNormals);
             if (parserResult.status != STATUS_OK) {
                 parserResult.columnNumber = lineIter - line.begin();
                 return Mesh();
             }
 
-            const bool hasTextures = indicesVerticesTexture.length() > 0;
-            const bool hasNormals = indicesNormals.length() > 0;
-
             facesVertices.append(indicesVertices.length());
-            facesVerticesTexture.append(hasTextures ? indicesVerticesTexture.length() : -1);
-            facesNormals.append(hasNormals ? indicesNormals.length() : -1);
+            facesVerticesTexture.append(indicesVerticesTexture.length());
+            facesNormals.append(indicesNormals.length());
             break;
         }
 

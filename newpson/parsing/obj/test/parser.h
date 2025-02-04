@@ -1,6 +1,9 @@
 #include <QString>
 #include <QTest>
 #include <QTextStream>
+#include <QVector>
+#include <QVector2D>
+#include <QVector3D>
 #include "mesh.hpp"
 #include "obj/parser.hpp"
 
@@ -202,21 +205,108 @@ private slots:
 
         QString input = commonPart + face;
 
-        qDebug() << Newpson::Parsing::Obj::statusToString(parserResult.status);
         Newpson::Parsing::Obj::load(QTextStream(&input), parserResult);
         QCOMPARE(parserResult.status, status);
     }
 
     void testParsedData()
     {
-//        Newpson::Mesh mesh = Newpson::Parsing::Obj::load(QTextStream(&input), parserResult);
+        QString input(\
+            "# Blender 4.3.1 \n" \
+            "# www.blender.org \n" \
+            "mtllib cube4.mtl \n" \
+            "o Cube \n" \
+            "v 1.000000 1.000000 -1.000000 \n" \
+            "v 1.000000 -1.000000 -1.000000 \n" \
+            "v 1.000000 1.000000 1.000000 \n" \
+            "v 1.000000 -1.000000 1.000000 \n" \
+            "v -1.000000 1.000000 -1.000000 \n" \
+            "v -1.000000 -1.000000 -1.000000 \n" \
+            "v -1.000000 1.000000 1.000000 \n" \
+            "v -1.000000 -1.000000 1.000000 \n" \
+            "vn -0.0000 1.0000 -0.0000 \n" \
+            "vn -0.0000 -0.0000 1.0000 \n" \
+            "vn -1.0000 -0.0000 -0.0000 \n" \
+            "vn -0.0000 -1.0000 -0.0000 \n" \
+            "vn 1.0000 -0.0000 -0.0000 \n" \
+            "vn -0.0000 -0.0000 -1.0000 \n" \
+            "vt 0.625000 0.500000 \n" \
+            "vt 0.875000 0.500000 \n" \
+            "vt 0.875000 0.750000 \n" \
+            "vt 0.625000 0.750000 \n" \
+            "vt 0.375000 0.750000 \n" \
+            "vt 0.625000 1.000000 \n" \
+            "vt 0.375000 1.000000 \n" \
+            "vt 0.375000 0.000000 \n" \
+            "vt 0.625000 0.000000 \n" \
+            "vt 0.625000 0.250000 \n" \
+            "vt 0.375000 0.250000 \n" \
+            "vt 0.125000 0.500000 \n" \
+            "vt 0.375000 0.500000 \n" \
+            "vt 0.125000 0.750000 \n" \
+            "s 0 \n" \
+            "usemtl Material \n" \
+            "f 1/1/1 5/2/1 7/3/1 3/4/1 \n" \
+            "f 4/5/2 3/4/2 7/6/2 8/7/2 \n" \
+            "f 8//3 7//3 5//3 6//3 \n" \
+            "f 6/12/4 2/13/4 4/5/4 8/14/4 \n" \
+            "f 2/13 1/1 3/4 4/5 \n" \
+            "f 6 5 1 2 \n");
 
-//        Newpson::Parsing::Obj::Parser::Status errorCode = Newpson::Parsing::Obj::Parser::STATUS_OK;
-//        // Values were verified in blender, link to model https://free3d.com/3d-model/bugatti-chiron-2017-model-31847.html
-//        QVERIFY(Newpson::Parsing::Obj::Parser::load(PROJECT_ASSETS "/big/bugatti.obj", mesh).status == errorCode);
-//        qDebug() << mesh.numGeometry(); // 744213
-//        QVERIFY(mesh.numTextures() == 744211); // ? does not pass; may be blender truncates some of the vertices? TODO
-//        QVERIFY(mesh.numFaces() == 759373); // OK
+        const Newpson::Mesh mesh = Newpson::Parsing::Obj::load(QTextStream(&input), parserResult);
+        QCOMPARE(parserResult.status, STATUS_OK);
+        QCOMPARE(mesh.isValid(), true);
+
+        const QVector<QVector3D> &vertices = mesh.vertices();
+        QCOMPARE(vertices.length(), 8);
+        QCOMPARE(vertices[0], QVector3D( 1.000000,  1.000000, -1.000000));
+        QCOMPARE(vertices[1], QVector3D( 1.000000, -1.000000, -1.000000));
+        QCOMPARE(vertices[2], QVector3D( 1.000000,  1.000000,  1.000000));
+        QCOMPARE(vertices[3], QVector3D( 1.000000, -1.000000,  1.000000));
+        QCOMPARE(vertices[4], QVector3D(-1.000000,  1.000000, -1.000000));
+        QCOMPARE(vertices[5], QVector3D(-1.000000, -1.000000, -1.000000));
+        QCOMPARE(vertices[6], QVector3D(-1.000000,  1.000000,  1.000000));
+        QCOMPARE(vertices[7], QVector3D(-1.000000, -1.000000,  1.000000));
+
+        const QVector<QVector2D> &verticesTexture = mesh.verticesTexture();
+        QCOMPARE(verticesTexture.length(), 14);
+        QCOMPARE(verticesTexture[ 0], QVector2D(0.625000, 0.500000));
+        QCOMPARE(verticesTexture[ 1], QVector2D(0.875000, 0.500000));
+        QCOMPARE(verticesTexture[ 2], QVector2D(0.875000, 0.750000));
+        QCOMPARE(verticesTexture[ 3], QVector2D(0.625000, 0.750000));
+        QCOMPARE(verticesTexture[ 4], QVector2D(0.375000, 0.750000));
+        QCOMPARE(verticesTexture[ 5], QVector2D(0.625000, 1.000000));
+        QCOMPARE(verticesTexture[ 6], QVector2D(0.375000, 1.000000));
+        QCOMPARE(verticesTexture[ 7], QVector2D(0.375000, 0.000000));
+        QCOMPARE(verticesTexture[ 8], QVector2D(0.625000, 0.000000));
+        QCOMPARE(verticesTexture[ 9], QVector2D(0.625000, 0.250000));
+        QCOMPARE(verticesTexture[10], QVector2D(0.375000, 0.250000));
+        QCOMPARE(verticesTexture[11], QVector2D(0.125000, 0.500000));
+        QCOMPARE(verticesTexture[12], QVector2D(0.375000, 0.500000));
+        QCOMPARE(verticesTexture[13], QVector2D(0.125000, 0.750000));
+
+        const QVector<QVector3D> &normals = mesh.normals();
+        QCOMPARE(normals.length(), 6);
+        QCOMPARE(normals[0], QVector3D(-0.0000,  1.0000, -0.0000));
+        QCOMPARE(normals[1], QVector3D(-0.0000, -0.0000,  1.0000));
+        QCOMPARE(normals[2], QVector3D(-1.0000, -0.0000, -0.0000));
+        QCOMPARE(normals[3], QVector3D(-0.0000, -1.0000, -0.0000));
+        QCOMPARE(normals[4], QVector3D( 1.0000, -0.0000, -0.0000));
+        QCOMPARE(normals[5], QVector3D(-0.0000, -0.0000, -1.0000));
+
+        const QVector<int> &indicesVertices = mesh.indicesVertices();
+        const QVector<int> &indicesVerticesTexture = mesh.indicesVerticesTexture();
+        const QVector<int> &indicesNormals = mesh.indicesNormals();
+        QCOMPARE(indicesVertices, QVector<int>({0, 4, 6, 2, 3, 2, 6, 7, 7, 6, 4, 5, 5, 1, 3, 7, 1, 0, 2, 3, 5, 4, 0, 1}));
+        QCOMPARE(indicesVerticesTexture, QVector<int>({0, 1, 2, 3, 4, 3, 5, 6, 11, 12, 4, 13, 12, 0, 3, 4}));
+        QCOMPARE(indicesNormals, QVector<int>({0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3}));
+
+        const QVector<int> &facesVertices = mesh.facesVertices();
+        const QVector<int> &facesVerticesTexture = mesh.facesVerticesTexture();
+        const QVector<int> &facesNormals = mesh.facesNormals();
+        QCOMPARE(facesVertices, QVector<int>({4, 8, 12, 16, 20, 24}));
+        QCOMPARE(facesVerticesTexture, QVector<int>({4, 8, 8, 12, 16, 16}));
+        QCOMPARE(facesNormals, QVector<int>({4, 8, 12, 16, 16, 16}));
     }
 
 }; // class Parser

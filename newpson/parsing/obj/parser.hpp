@@ -79,6 +79,8 @@ Status parseFace(
     const int numNormals,
     QChar const * const lineEnd,
     QChar const *&lineIter,
+    bool &hasVerticesTexture,
+    bool &hasNormals,
     QVector<int> &outFaceGeometric,
     QVector<int> &outFaceTexture,
     QVector<int> &outFaceNormal);
