@@ -101,6 +101,10 @@ LineType parseLineType(QChar const * const lineEnd, QChar const *&lineIter)
         if (isNextCharEndOrSpace(lineEnd, lineIter))
             return LINETYPE_FACE;
 
+    if (*lineIter == 'g')
+        if (isNextCharEndOrSpace(lineEnd, lineIter))
+            return LINETYPE_GROUP;
+
     return LINETYPE_UNKNOWN;
 }
 
@@ -386,26 +390,44 @@ Status parseFace(
     return status;
 }
 
-Status parseGroups(
-        const int numFaces,
+Status parseGroupsNames(
         QChar const * const lineEnd,
         QChar const *&lineIter,
-        QVector<QString> &groupsNames,
-        QVector<int> &groupsBegins,
-        QVector<int> &groupsEnds)
+        QVector<QString> &groupsNames)
 {
     skipWhiteSpace(lineEnd, lineIter);
     if (isEndOrSpace(lineEnd, lineIter))
         return STATUS_ERROR_EXPECTED_STRING;
 
-    while (lineIter != lineEnd) {
+    while (lineIter < lineEnd) {
         const QChar * const contentBegin = lineIter;
         while (!isEndOrSpace(lineEnd, lineIter))
             ++lineIter;
         groupsNames.append(QStringView(contentBegin, lineIter).toString());
-        // TODO from here
+        skipWhiteSpace(lineEnd, lineIter);
     }
     return STATUS_OK;
+}
+
+void fillRemainingGroupsEnds(
+    const int numFaces,
+    const int numActiveGroups,
+    QVector<int> &groupsEnds)
+{
+    for (int i = 0; i < numActiveGroups; ++i)
+        groupsEnds.append(numFaces);
+}
+
+void switchActiveGroups(
+    const int numFaces,
+    const int numNextActiveGroups,
+    QVector<int> &groupsBegins,
+    QVector<int> &groupsEnds)
+{
+    const int numActiveGroups = groupsBegins.length() - groupsEnds.length();
+    fillRemainingGroupsEnds(numFaces, numActiveGroups, groupsEnds);
+    for (int i = 0; i < numNextActiveGroups; ++i)
+        groupsBegins.append(numFaces);
 }
 
 } // namespace Internal
@@ -426,7 +448,8 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
     QVector<QString> groupsNames = {"default"};
     QVector<int> groupsBegins = {0};
     QVector<int> groupsEnds;
-    // int numGroupsEndsPending = 1; // == groupsBegins.length() - groupsEnds.length()
+
+    parserResult = ParserResult(STATUS_OK);
 
     while (!input.atEnd()) {
         const QString line = input.readLine();
@@ -501,7 +524,14 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
         }
 
         case LINETYPE_GROUP: {
-            parseGroups(facesVertices.length(), groupsBegins, groupsEnds, groupsNames);
+            const int numGroupsBeforeParse = groupsNames.length();
+            parserResult.status = parseGroupsNames(lineEnd, lineIter, groupsNames);
+            if (parserResult.status != STATUS_OK) {
+                parserResult.columnNumber = lineIter - line.begin();
+                return Mesh();
+            }
+            const int numGroupsParsed = groupsNames.length() - numGroupsBeforeParse;
+            switchActiveGroups(facesVertices.length(), numGroupsParsed, groupsBegins, groupsEnds);
             break;
         }
 
@@ -519,6 +549,11 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
         && normals.length() == 0)
         parserResult.status = STATUS_ERROR_INPUT_EMPTY;
 
+    fillRemainingGroupsEnds(
+        facesVertices.length(),
+        groupsBegins.length() - groupsEnds.length(),
+        groupsEnds);
+
     return Mesh(
         vertices,
         verticesTexture,
@@ -528,7 +563,10 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
         indicesNormals,
         facesVertices,
         facesVerticesTexture,
-        facesNormals);
+        facesNormals,
+        groupsNames,
+        groupsBegins,
+        groupsEnds);
 }
 
 ParserResult::ParserResult(Status status):

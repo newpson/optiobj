@@ -44,9 +44,9 @@ Mesh::Mesh(
     const QVector<int> &facesVertices,
     const QVector<int> &facesVerticesTexture,
     const QVector<int> &facesNormals,
+    const QVector<QString> &groupsNames,
     const QVector<int> &groupsBegins,
-    const QVector<int> &groupsEnds,
-    const QVector<QString> &groupsNames):
+    const QVector<int> &groupsEnds):
 
     m_vertices(vertices),
     m_verticesTexture(verticesTexture),

@@ -1,7 +1,6 @@
 #ifndef NEWPSON_MESH_H
 #define NEWPSON_MESH_H
 
-#include <QMap>
 #include <QVector>
 #include <QVector2D>
 #include <QVector3D>
@@ -34,9 +33,9 @@ public:
         const QVector<int> &facesVertices,
         const QVector<int> &facesVerticesTexture,
         const QVector<int> &facesNormals,
+        const QVector<QString> &groupsNames,
         const QVector<int> &groupsBegins,
-        const QVector<int> &groupsEnds,
-        const QVector<QString> &groupsNames);
+        const QVector<int> &groupsEnds);
 
     const QVector<QVector3D> &vertices() const;
     const QVector<QVector2D> &verticesTexture() const;

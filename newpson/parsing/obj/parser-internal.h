@@ -31,6 +31,16 @@ void skipUntilDelimiter(QChar const * const lineEnd, QChar const *&lineIter);
 void skipUntilContent(QChar const * const lineEnd, QChar const *&lineIter);
 bool isNextCharEndOrSpace(QChar const * const lineEnd, QChar const *&lineIter);
 
+void switchActiveGroups(
+    const int numFaces,
+    const int numNextActiveGroups,
+    QVector<int> &groupsBegins,
+    QVector<int> &groupsEnds);
+void fillRemainingGroupsEnds(
+    const int numFaces,
+    const int numActiveGroups,
+    QVector<int> &groupsEnds);
+
 LineType parseLineType(QChar const * const lineEnd, QChar const *&lineIter);
 Status parseFloat(QChar const * const lineEnd, QChar const *&lineIter, float &outFloat);
 Status parseInteger(QChar const * const lineEnd, QChar const *&lineIter, int &outInteger);

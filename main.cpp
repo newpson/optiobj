@@ -13,7 +13,8 @@ int main()
 {
     Newpson::Parsing::Obj::ParserResult parserResult;
 
-    Newpson::Mesh mesh = Newpson::Parsing::Obj::load(PROJECT_ASSETS "/ok/cube-semifull.obj", parserResult);
+    // Newpson::Mesh mesh = Newpson::Parsing::Obj::load(PROJECT_ASSETS "/ok/cube-semifull.obj", parserResult);
+    Newpson::Mesh mesh = Newpson::Parsing::Obj::load(PROJECT_ASSETS "/ok/skull.obj", parserResult);
 
     qDebug() << Newpson::Parsing::Obj::statusToString(parserResult.status) << "at";
     qDebug() << "line" << parserResult.lineNumber;
@@ -28,20 +29,22 @@ int main()
         qDebug() << "Number of normals:" << mesh.normals().length();
         qDebug() << "Number of faces:" << mesh.facesVertices().length();
 
-        qDebug() << "[Overall mesh data]";
-        qDebug() << "geometry:" << mesh.vertices();
-        qDebug() << "textures:" << mesh.verticesTexture();
-        qDebug() << "normals:" << mesh.normals();
-        qDebug() << "indicesGeometry:" << mesh.indicesVertices();
-        qDebug() << "indeicesTextures:" << mesh.indicesVerticesTexture();
-        qDebug() << "indeicesNormals:" << mesh.indicesNormals();
-        qDebug() << "facesGeometry:" << mesh.facesVertices();
-        qDebug() << "facesTextures:" << mesh.facesVerticesTexture();
-        qDebug() << "facesNormals:" << mesh.facesNormals();
+        // qDebug() << "[Overall mesh data]";
+        // qDebug() << "geometry:" << mesh.vertices();
+        // qDebug() << "textures:" << mesh.verticesTexture();
+        // qDebug() << "normals:" << mesh.normals();
+        // qDebug() << "indicesGeometry:" << mesh.indicesVertices();
+        // qDebug() << "indicesTextures:" << mesh.indicesVerticesTexture();
+        // qDebug() << "indicesNormals:" << mesh.indicesNormals();
+        // qDebug() << "facesGeometry:" << mesh.facesVertices();
+        // qDebug() << "facesTextures:" << mesh.facesVerticesTexture();
+        // qDebug() << "facesNormals:" << mesh.facesNormals();
         qDebug() << "groupsNames:" << mesh.groupsNames();
         qDebug() << "groupsBegins:" << mesh.groupsBegins();
         qDebug() << "groupsEnds:" << mesh.groupsEnds();
     }
+
+
 
     return 0;
 }
