@@ -10,9 +10,32 @@ namespace Newpson::Parsing::Obj::Test {
 
 class Parser: public QObject
 {
-    Newpson::Parsing::Obj::ParserResult parserResult;
-
     Q_OBJECT
+
+    Newpson::Parsing::Obj::ParserResult parserResult;
+    QString commonPart;
+
+public:
+    Parser():
+        QObject(),
+        // 4 vertices, 4 texture vertices, 6 normals
+        commonPart(
+            "v   0  0  0 \n" \
+            "v   0  0  1 \n" \
+            "v   0  1  0 \n" \
+            "v   0  1  1 \n" \
+            "vt  0  0    \n" \
+            "vt  0  1    \n" \
+            "vt  1  0    \n" \
+            "vt  1  1    \n" \
+            "vn  0  0  1 \n" \
+            "vn  0  1  0 \n" \
+            "vn  1  0  0 \n" \
+            "vn  0  0 -1 \n" \
+            "vn  0 -1  0 \n" \
+            "vn -1  0  0 \n")
+    {}
+
 private slots:
     void testNumArguments_data()
     {
@@ -32,7 +55,7 @@ private slots:
         QTest::newRow("vertexTexture-many") << "vt 1 1 1 1 1 1 1" << STATUS_OK;
         QTest::newRow("normal-3") << "vn 1 1 1" << STATUS_OK;
         QTest::newRow("normal-many") << "vn 1 1 1 1 1 1 1" << STATUS_OK;
-        QTest::newRow("face-3") << "v 1 1 1 \n f 1 1 1 " << STATUS_OK;
+        QTest::newRow("face-3") << "v 1 1 1 \n f 1 1 1 " << STATUS_OK; // TODO add "end whitespace" check test
         QTest::newRow("face-many") << "v 1 1 1 \n f 1 1 1 1 1 1 1" << STATUS_OK;
     }
 
@@ -145,65 +168,57 @@ private slots:
         QFETCH(QString, face);
         QFETCH(Newpson::Parsing::Obj::Status, status);
 
-        QString input(
-            "v  0 0 0 \n" \
-            "v  0 0 1 \n" \
-            "v  0 1 0 \n" \
-            "v  0 1 1 \n" \
-            "vt 0 0   \n" \
-            "vt 0 1   \n" \
-            "vt 1 0   \n" \
-            "vt 1 1   \n" \
-            "vn 0 0 1 \n" \
-            "vn 0 1 0 \n" \
-            "vn 1 0 0 \n"
-        );
-        input.append(face);
+        QString input = commonPart + face;
 
         Newpson::Parsing::Obj::load(QTextStream(&input), parserResult);
         QCOMPARE(parserResult.status, status);
     }
 
-//    void testUndefinedIndex()
-//    {
-//        Newpson::Mesh mesh;
-//        Newpson::Parsing::Obj::Parser::Status errorCode = Newpson::Parsing::Obj::Parser::STATUS_ERROR_UNDEFINED_INDEX;
-//        QVERIFY(Newpson::Parsing::Obj::Parser::load(QTextStream("f 1"), mesh).status == errorCode);
-//        QVERIFY(Newpson::Parsing::Obj::Parser::load(QTextStream("f -42"), mesh).status == errorCode);
-//        QVERIFY(Newpson::Parsing::Obj::Parser::load(QTextStream("v 1 1 1 \n f 0 1 1"), mesh).status == errorCode);
-//        QVERIFY(Newpson::Parsing::Obj::Parser::load(QTextStream("v 1 1 1 \n f 1/1/ 1// 1//"), mesh).status == errorCode);
-//        // normals storage is not implemeneted
-//        // QVERIFY(Newpson::Parsing::OBJ::Parser::load(QTextStream("v 1 1 1 \n f 1//1 1// 1//"), mesh).status == errorCode);
-//        QVERIFY(Newpson::Parsing::Obj::Parser::load(QTextStream(COMMON_PART "f 1/1/ 1/1/ 1/4/"), mesh).status == errorCode);
-//        QVERIFY(Newpson::Parsing::Obj::Parser::load(QTextStream(COMMON_PART "f 1/4/ 1/1/ 1//"), mesh).status == errorCode);
-//        QVERIFY(Newpson::Parsing::Obj::Parser::load(QTextStream(COMMON_PART "f 1/4"), mesh).status == errorCode);
-//        QVERIFY(Newpson::Parsing::Obj::Parser::load(QTextStream(COMMON_PART "f 1/3/ 1/3/ 4/3/"), mesh).status == errorCode);
-//        QVERIFY(Newpson::Parsing::Obj::Parser::load(QTextStream(COMMON_PART "f 1/3/ 4/3/ 1/3/"), mesh).status == errorCode);
-//        QVERIFY(Newpson::Parsing::Obj::Parser::load(QTextStream(COMMON_PART "f 4/3/ 1/3/ 1/3/"), mesh).status == errorCode);
-//    }
+    void testUndefinedIndex_data()
+    {
+        QTest::addColumn<QString>("face");
+        QTest::addColumn<Newpson::Parsing::Obj::Status>("status");
+        QTest::newRow("vertices-defined") << "f 1 2 3 4" << STATUS_OK;
+        QTest::newRow("vertex-undefined") << "f 5" << STATUS_ERROR_UNDEFINED_INDEX;
+        QTest::newRow("vertices-undefined") << "f 5 6 7 8" << STATUS_ERROR_UNDEFINED_INDEX;
+        QTest::newRow("vertices-undefined+defined") << "f 5 1 2 3" << STATUS_ERROR_UNDEFINED_INDEX;
+        QTest::newRow("vertices-defined+undefined") << "f 1 2 3 5" << STATUS_ERROR_UNDEFINED_INDEX;
+        QTest::newRow("verticesTexture-defined") << "f 1/1 2/2 3/3 4/4" << STATUS_OK;
+        QTest::newRow("vertexTexture-undefined") << "f 1/5" << STATUS_ERROR_UNDEFINED_INDEX;
+        QTest::newRow("verticesTexture-undefined") << "f 1/5 2/6 3/7 4/8" << STATUS_ERROR_UNDEFINED_INDEX;
+        QTest::newRow("verticesTexture-undefined+defined") << "f 1/5 2/2 3/3 4/4" << STATUS_ERROR_UNDEFINED_INDEX;
+        QTest::newRow("verticesTexture-defined+undefined") << "f 1/1 2/2 3/3 4/5" << STATUS_ERROR_UNDEFINED_INDEX;
+        QTest::newRow("normals-defined") << "f 1//1 2//1 3//1 4//1" << STATUS_OK;
+        QTest::newRow("normal-undefined") << "f 1//7" << STATUS_ERROR_UNDEFINED_INDEX;
+        QTest::newRow("normals-undefined") << "f 1//7 2//8 3//9 4//10" << STATUS_ERROR_UNDEFINED_INDEX;
+        QTest::newRow("normals-undefined+defined") << "f 1//7 2//1 3//1 4//1" << STATUS_ERROR_UNDEFINED_INDEX;
+        QTest::newRow("normals-defined+undefined") << "f 1//1 2//1 3//1 4//7" << STATUS_ERROR_UNDEFINED_INDEX;
+    }
 
-//    void testExpectedInteger()
-//    {
-//        Newpson::Mesh mesh;
-//        Newpson::Parsing::Obj::Parser::Status errorCode = Newpson::Parsing::Obj::Parser::STATUS_ERROR_EXPECTED_INTEGER;
-//        QVERIFY(Newpson::Parsing::Obj::Parser::load(QTextStream(COMMON_PART "f"), mesh).status == errorCode);
-//        QVERIFY(Newpson::Parsing::Obj::Parser::load(QTextStream(COMMON_PART "f 1/3/ 1/3/ /3/"), mesh).status == errorCode);
-//        QVERIFY(Newpson::Parsing::Obj::Parser::load(QTextStream(COMMON_PART "f /3/ /3/ 7000/3/"), mesh).status == errorCode);
-//        QVERIFY(Newpson::Parsing::Obj::Parser::load(QTextStream(COMMON_PART "f // 1/2/3 1/2/3"), mesh).status == errorCode);
-//        QVERIFY(Newpson::Parsing::Obj::Parser::load(QTextStream(COMMON_PART "f /2/ /2/ /2/"), mesh).status == errorCode);
-//        QVERIFY(Newpson::Parsing::Obj::Parser::load(QTextStream(COMMON_PART "f 1/2/2 1/2/2 /2/"), mesh).status == errorCode);
-//    }
+    void testUndefinedIndex()
+    {
+        QFETCH(QString, face);
+        QFETCH(Newpson::Parsing::Obj::Status, status);
 
-//    void testData()
-//    {
-//        Newpson::Mesh mesh;
+        QString input = commonPart + face;
+
+        qDebug() << Newpson::Parsing::Obj::statusToString(parserResult.status);
+        Newpson::Parsing::Obj::load(QTextStream(&input), parserResult);
+        QCOMPARE(parserResult.status, status);
+    }
+
+    void testParsedData()
+    {
+//        Newpson::Mesh mesh = Newpson::Parsing::Obj::load(QTextStream(&input), parserResult);
+
 //        Newpson::Parsing::Obj::Parser::Status errorCode = Newpson::Parsing::Obj::Parser::STATUS_OK;
 //        // Values were verified in blender, link to model https://free3d.com/3d-model/bugatti-chiron-2017-model-31847.html
 //        QVERIFY(Newpson::Parsing::Obj::Parser::load(PROJECT_ASSETS "/big/bugatti.obj", mesh).status == errorCode);
 //        qDebug() << mesh.numGeometry(); // 744213
 //        QVERIFY(mesh.numTextures() == 744211); // ? does not pass; may be blender truncates some of the vertices? TODO
 //        QVERIFY(mesh.numFaces() == 759373); // OK
-//    }
-};
+    }
 
-} // namespace Newpson::Test
+}; // class Parser
+
+} // namespace Newpson::Parsing::Obj::Test

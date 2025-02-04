@@ -74,8 +74,9 @@ Status parseInteger(QChar const * const lineEnd, QChar const *&lineIter, int &ou
 Status parseVertexGeometric(QChar const * const lineEnd, QChar const *&lineIter, QVector3D &outVertex);
 Status parseVertexTexture(QChar const * const lineEnd, QChar const *&lineIter, QVector2D &outVertex);
 Status parseFace(
-    int numVerticesGeometric,
-    int numVerticesTexture,
+    const int numVerticesGeometric,
+    const int numVerticesTexture,
+    const int numNormals,
     QChar const * const lineEnd,
     QChar const *&lineIter,
     QVector<int> &outFaceGeometric,

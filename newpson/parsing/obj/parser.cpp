@@ -22,7 +22,7 @@ QString statusToString(Status const status)
     case STATUS_ERROR_UNDEFINED_INDEX: return "Undefined index";
     case STATUS_ERROR_INPUT: return "Error opening file";
     case STATUS_ERROR_INPUT_EMPTY: return "File is empty";
-    default: return "Reserved state";
+    default: return "Reserved sta7te";
     }
 }
 
@@ -282,18 +282,19 @@ Status parseFaceVertexComponents(
 }
 
 Status parseFace(
-        int numVerticesGeometric,
-        int numVerticesTexture,
+        const int numVertices,
+        const int numVerticesTexture,
+        const int numNormals,
         QChar const * const lineEnd,
         QChar const *&lineIter,
         QVector<int> &outFaceGeometric,
         QVector<int> &outFaceTexture,
         QVector<int> &outFaceNormal)
 {
-    int indexGeometric = 0;
+    int indexVertex = 0;
     bool mustHaveIndexTexture = false;
     bool hasIndexTexture = false;
-    int indexTexture = 0;
+    int indexVertexTexture = 0;
     bool mustHaveIndexNormal = false;
     bool hasIndexNormal = false;
     int indexNormal = 0;
@@ -302,70 +303,80 @@ Status parseFace(
 
     status = parseFaceVertexComponents(
                 lineEnd, lineIter,
-                indexGeometric,
-                hasIndexTexture, indexTexture,
+                indexVertex,
+                hasIndexTexture, indexVertexTexture,
                 hasIndexNormal, indexNormal);
     if (status != STATUS_OK)
         return status;
-    if (indexGeometric < 1 || indexGeometric > numVerticesGeometric)
+    if (indexVertex == 0 || indexVertex > numVertices)
         return STATUS_ERROR_UNDEFINED_INDEX;
-    outFaceGeometric.append(indexGeometric);
+    outFaceGeometric.append(indexVertex);
     if (hasIndexTexture) {
         mustHaveIndexTexture = true;
-        if (indexTexture < 1 || indexTexture > numVerticesTexture)
+        if (indexVertexTexture == 0 || indexVertexTexture > numVerticesTexture)
             return STATUS_ERROR_UNDEFINED_INDEX;
-        outFaceTexture.append(indexTexture);
+        outFaceTexture.append(indexVertexTexture);
     }
     if (hasIndexNormal) {
         mustHaveIndexNormal= true;
-        // TODO check index of normal
+        if (indexNormal == 0 || indexNormal > numNormals)
+             return STATUS_ERROR_UNDEFINED_INDEX;
         outFaceNormal.append(indexNormal);
     }
 
     for (int i = 0; i < 2; ++i) {
         status = parseFaceVertexComponents(
                     lineEnd, lineIter,
-                    indexGeometric,
-                    hasIndexTexture, indexTexture,
+                    indexVertex,
+                    hasIndexTexture, indexVertexTexture,
                     hasIndexNormal, indexNormal);
         if (status != STATUS_OK)
             return status;
-        if (indexGeometric < 1 || indexGeometric > numVerticesGeometric)
+        if (indexVertex == 0 || indexVertex > numVertices)
             return STATUS_ERROR_UNDEFINED_INDEX;
-        outFaceGeometric.append(indexGeometric);
+        outFaceGeometric.append(indexVertex);
         if (mustHaveIndexTexture != hasIndexTexture
                 || mustHaveIndexNormal != hasIndexNormal)
             return STATUS_ERROR_COMPONENTS_INCOHERENCE;
         if (hasIndexTexture) {
-            if (indexTexture < 1 || indexTexture > numVerticesTexture)
+            if (indexVertexTexture == 0 || indexVertexTexture > numVerticesTexture)
                 return STATUS_ERROR_UNDEFINED_INDEX;
-            outFaceTexture.append(indexTexture);
+            outFaceTexture.append(indexVertexTexture);
         }
         if (hasIndexNormal)
+            if (indexNormal == 0 || indexNormal > numNormals)
+                 return STATUS_ERROR_UNDEFINED_INDEX;
             outFaceNormal.append(indexNormal);
     }
 
-    while (!isEndOrSpace(lineEnd, lineIter)) {
+    qDebug() << "Current position from end:" << lineEnd - lineIter;
+
+    while (lineIter != lineEnd) {
+        skipWhiteSpace(lineEnd, lineIter);
+        if (lineIter == lineEnd)
+            return STATUS_OK;
         status = parseFaceVertexComponents(
                     lineEnd, lineIter,
-                    indexGeometric,
-                    hasIndexTexture, indexTexture,
+                    indexVertex,
+                    hasIndexTexture, indexVertexTexture,
                     hasIndexNormal, indexNormal);
        if (status != STATUS_OK)
            return status;
-       if (indexGeometric < 1 || indexGeometric > numVerticesGeometric)
+       if (indexVertex == 0 || indexVertex > numVertices)
            return STATUS_ERROR_UNDEFINED_INDEX;
-       outFaceGeometric.append(indexGeometric);
+       outFaceGeometric.append(indexVertex);
 
        if (mustHaveIndexTexture != hasIndexTexture
                || mustHaveIndexNormal != hasIndexNormal)
            return STATUS_ERROR_COMPONENTS_INCOHERENCE;
        if (hasIndexTexture) {
-           if (indexTexture < 1 || indexTexture > numVerticesTexture)
+           if (indexVertexTexture == 0 || indexVertexTexture > numVerticesTexture)
                return STATUS_ERROR_UNDEFINED_INDEX;
-           outFaceTexture.append(indexTexture);
+           outFaceTexture.append(indexVertexTexture);
        }
        if (hasIndexNormal)
+           if (indexNormal == 0 || indexNormal > numNormals)
+                return STATUS_ERROR_UNDEFINED_INDEX;
            outFaceNormal.append(indexNormal);
     }
 
@@ -443,36 +454,24 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
         }
 
         case LINETYPE_FACE: {
-            QVector<int> faceVertices;
-            QVector<int> faceVerticesTexture;
-            QVector<int> faceNormals;
-
             int components[3];
             parserResult.status = parseFace(
                     vertices.length(),
                     verticesTexture.length(),
+                    normals.length(),
                     lineEnd, lineIter,
-                    faceVertices, faceVerticesTexture, faceNormals);
+                    indicesVertices, indicesVerticesTexture, indicesNormals);
             if (parserResult.status != STATUS_OK) {
                 parserResult.columnNumber = lineIter - line.begin();
                 return Mesh();
             }
 
-            const bool hasTextures = faceVerticesTexture.length() > 0;
-            const bool hasNormals = faceNormals.length() > 0;
+            const bool hasTextures = indicesVerticesTexture.length() > 0;
+            const bool hasNormals = indicesNormals.length() > 0;
 
             facesVertices.append(indicesVertices.length());
             facesVerticesTexture.append(hasTextures ? indicesVerticesTexture.length() : -1);
             facesNormals.append(hasNormals ? indicesNormals.length() : -1);
-
-            for (int i = 0; i < faceVertices.length(); ++i)
-            {
-                indicesVertices.append(faceVertices[i] - 1);
-                if (hasTextures)
-                    indicesVerticesTexture.append(faceVerticesTexture[i] - 1);
-                if (hasNormals)
-                    indicesNormals.append(faceNormals[i] - 1);
-            }
             break;
         }
 
