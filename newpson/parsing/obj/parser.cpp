@@ -452,13 +452,21 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
     parserResult = ParserResult(STATUS_OK);
 
     while (!input.atEnd()) {
-        const QString line = input.readLine();
+        QString lineBuffer = input.readLine();
         ++parserResult.lineNumber;
 
-        if (line.isEmpty())
+        if (lineBuffer.isEmpty())
             continue;
 
-        // TODO multiline statements support (when the line ends with '\')
+        while (lineBuffer[lineBuffer.length() - 1] == '\\') {
+            lineBuffer[lineBuffer.length() - 1] = ' ';
+            lineBuffer.append(input.readLine());
+            ++parserResult.lineNumber;
+        }
+
+        // because of 'mixing const and nonconst iterators' clang warn
+        const QString line(lineBuffer);
+        qDebug() << "Line:" << line;
 
         QChar const *lineIter = line.begin();
         QChar const * const lineEnd = line.end();

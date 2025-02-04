@@ -14,7 +14,14 @@ int main()
     Newpson::Parsing::Obj::ParserResult parserResult;
 
     // Newpson::Mesh mesh = Newpson::Parsing::Obj::load(PROJECT_ASSETS "/ok/cube-semifull.obj", parserResult);
-    Newpson::Mesh mesh = Newpson::Parsing::Obj::load(PROJECT_ASSETS "/ok/skull.obj", parserResult);
+    // Newpson::Mesh mesh = Newpson::Parsing::Obj::load(PROJECT_ASSETS "/ok/skull.obj", parserResult);
+    Newpson::Mesh mesh = Newpson::Parsing::Obj::load(QTextStream(
+                                                        "v 1 1 1 \n"
+                                                        "vt 1 1 1 \n"
+                                                        "vn 1 1 1 \n"
+                                                        "f 1/1/1 \\\n"
+                                                        "  1/1/1 \\\n"
+                                                        "  1/1/1 \\\n"), parserResult);
 
     qDebug() << Newpson::Parsing::Obj::statusToString(parserResult.status) << "at";
     qDebug() << "line" << parserResult.lineNumber;
