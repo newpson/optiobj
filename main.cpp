@@ -1,5 +1,5 @@
 #include "mesh.hpp"
-#include "obj/parser.hpp"
+#include "obj/parser.h"
 
 #include <QDebug>
 #include <QFile>

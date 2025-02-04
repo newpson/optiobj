@@ -3,7 +3,8 @@ target_sources(Newpson_Parsing_OBJ_Parser
     PRIVATE
     parser.cpp
     PUBLIC
-    parser.hpp)
+    parser.h
+    parser-internal.h)
 target_include_directories(Newpson_Parsing_OBJ_Parser
     PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/..)

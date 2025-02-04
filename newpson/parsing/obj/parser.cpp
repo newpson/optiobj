@@ -1,13 +1,14 @@
-#include "parser.hpp"
-#include "mesh.hpp"
-
-#include <QDebug>
 #include <QString>
 #include <QStringList>
 #include <QStringView>
 #include <QVector>
 #include <QVector2D>
 #include <QVector3D>
+#include <QDebug>
+
+#include "mesh.hpp"
+#include "parser.h"
+#include "parser-internal.h"
 
 namespace Newpson::Parsing::Obj {
 

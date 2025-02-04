@@ -5,7 +5,8 @@
 #include <QVector2D>
 #include <QVector3D>
 #include "mesh.hpp"
-#include "obj/parser.hpp"
+#include "obj/parser.h"
+#include "obj/parser-internal.h"
 
 Q_DECLARE_METATYPE(Newpson::Parsing::Obj::Status)
 
