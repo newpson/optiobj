@@ -1,17 +1,29 @@
 #ifndef NEWPSON_MESH_H
 #define NEWPSON_MESH_H
 
+#include <QMap>
 #include <QVector>
 #include <QVector2D>
 #include <QVector3D>
 
 namespace Newpson {
 
-// should be immutable
 class Mesh
 {
 public:
-    Mesh() = default;
+    Mesh();
+
+    Mesh(
+        const QVector<QVector3D> &vertices,
+        const QVector<QVector2D> &verticesTexture,
+        const QVector<QVector3D> &normals,
+        const QVector<int> &indicesVertices,
+        const QVector<int> &indicesVerticesTexture,
+        const QVector<int> &indicesNormals,
+        const QVector<int> &facesVertices,
+        const QVector<int> &facesVerticesTexture,
+        const QVector<int> &facesNormals);
+
     Mesh(
         const QVector<QVector3D> &vertices,
         const QVector<QVector2D> &verticesTexture,
@@ -22,7 +34,9 @@ public:
         const QVector<int> &facesVertices,
         const QVector<int> &facesVerticesTexture,
         const QVector<int> &facesNormals,
-        const QVector<int> &polyGroups);
+        const QVector<int> &groupsBegins,
+        const QVector<int> &groupsEnds,
+        const QVector<QString> &groupsNames);
 
     const QVector<QVector3D> &vertices() const;
     const QVector<QVector2D> &verticesTexture() const;
@@ -33,7 +47,9 @@ public:
     const QVector<int> &facesVertices() const;
     const QVector<int> &facesVerticesTexture() const;
     const QVector<int> &facesNormals() const;
-    const QVector<int> &polyGroups() const;
+    const QVector<QString> &groupsNames() const;
+    const QVector<int> &groupsBegins() const;
+    const QVector<int> &groupsEnds() const;
 
     bool isValid() const;
 
@@ -47,7 +63,9 @@ private:
     QVector<int> m_facesVertices;
     QVector<int> m_facesVerticesTexture;
     QVector<int> m_facesNormals;
-    QVector<int> m_polyGroups;
+    QVector<QString> m_groupsNames;
+    QVector<int> m_groupsBegins;
+    QVector<int> m_groupsEnds;
 };
 
 }

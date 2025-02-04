@@ -16,10 +16,11 @@ namespace Newpson::Parsing::Obj::Internal {
 enum LineType {
     LINETYPE_EMPTY,
     LINETYPE_COMMENT,
-    LINETYPE_VERTEX_GEOMETRIC,
+    LINETYPE_VERTEX,
     LINETYPE_VERTEX_TEXTURE,
     LINETYPE_NORMAL,
     LINETYPE_FACE,
+    LINETYPE_GROUP,
     LINETYPE_UNKNOWN,
 };
 
@@ -35,14 +36,13 @@ Status parseFloat(QChar const * const lineEnd, QChar const *&lineIter, float &ou
 Status parseInteger(QChar const * const lineEnd, QChar const *&lineIter, int &outInteger);
 Status parseVertexGeometric(QChar const * const lineEnd, QChar const *&lineIter, QVector3D &outVertex);
 Status parseVertexTexture(QChar const * const lineEnd, QChar const *&lineIter, QVector2D &outVertex);
+Status parsePolygroup(QChar const * const lineEnd, QChar const *&lineIter, QString &outName);
 Status parseFace(
     const int numVerticesGeometric,
     const int numVerticesTexture,
     const int numNormals,
     QChar const * const lineEnd,
     QChar const *&lineIter,
-    bool &hasVerticesTexture,
-    bool &hasNormals,
     QVector<int> &outFaceGeometric,
     QVector<int> &outFaceTexture,
     QVector<int> &outFaceNormal);
@@ -55,6 +55,6 @@ Status parseFaceVertexComponents(
     bool &hasIndexNormal,
     int &indexNormal);
 
-} // namespace Newpson::Parsing::Jbj::Internal
+} // namespace Newpson::Parsing::Obj::Internal
 
 #endif // NEWPSON_PARSING_OBJ_PARSER_INTERNAL_H

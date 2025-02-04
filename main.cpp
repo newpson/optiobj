@@ -21,7 +21,7 @@ int main()
 
     if (parserResult.status == Newpson::Parsing::Obj::STATUS_OK) {
         if (!mesh.isValid())
-            qDebug() << "Invalid mesh!";
+            qDebug() << "Invalid mesh.";
         qDebug() << "[Parsing stats]";
         qDebug() << "Number of geometric vertices:" << mesh.vertices().length();
         qDebug() << "Number of texture vertices:" << mesh.verticesTexture().length();
@@ -38,6 +38,9 @@ int main()
         qDebug() << "facesGeometry:" << mesh.facesVertices();
         qDebug() << "facesTextures:" << mesh.facesVerticesTexture();
         qDebug() << "facesNormals:" << mesh.facesNormals();
+        qDebug() << "groupsNames:" << mesh.groupsNames();
+        qDebug() << "groupsBegins:" << mesh.groupsBegins();
+        qDebug() << "groupsEnds:" << mesh.groupsEnds();
     }
 
     return 0;

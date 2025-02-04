@@ -23,7 +23,8 @@ QString statusToString(Status const status)
     case STATUS_ERROR_UNDEFINED_INDEX: return "Undefined index";
     case STATUS_ERROR_INPUT: return "Error opening file";
     case STATUS_ERROR_INPUT_EMPTY: return "File is empty";
-    default: return "0xDEADBEEF";
+    case STATUS_ERROR_EXPECTED_STRING: return "String expected";
+    default: return "Reserved state";
     }
 }
 
@@ -86,7 +87,7 @@ LineType parseLineType(QChar const * const lineEnd, QChar const *&lineIter)
 
     if (*lineIter == 'v') {
         if (isNextCharEndOrSpace(lineEnd, lineIter))
-            return LINETYPE_VERTEX_GEOMETRIC;
+            return LINETYPE_VERTEX;
         if (*lineIter == 't')
             if (isNextCharEndOrSpace(lineEnd, lineIter))
                 return LINETYPE_VERTEX_TEXTURE;
@@ -288,8 +289,6 @@ Status parseFace(
         const int numNormals,
         QChar const * const lineEnd,
         QChar const *&lineIter,
-        bool &hasVerticesTexture,
-        bool &hasNormals,
         QVector<int> &outFacesVertices,
         QVector<int> &outFacesVerticesTexture,
         QVector<int> &outFacesNormals)
@@ -316,14 +315,12 @@ Status parseFace(
     outFacesVertices.append(indexVertex - 1);
     if (hasIndexTexture) {
         mustHaveIndexTexture = true;
-        hasVerticesTexture = true;
         if (indexVertexTexture == 0 || indexVertexTexture > numVerticesTexture)
             return STATUS_ERROR_UNDEFINED_INDEX;
         outFacesVerticesTexture.append(indexVertexTexture - 1);
     }
     if (hasIndexNormal) {
         mustHaveIndexNormal= true;
-        hasNormals = true;
         if (indexNormal == 0 || indexNormal > numNormals)
              return STATUS_ERROR_UNDEFINED_INDEX;
         outFacesNormals.append(indexNormal - 1);
@@ -378,6 +375,7 @@ Status parseFace(
                return STATUS_ERROR_UNDEFINED_INDEX;
            outFacesVerticesTexture.append(indexVertexTexture - 1);
        }
+
        if (hasIndexNormal) {
            if (indexNormal == 0 || indexNormal > numNormals)
                 return STATUS_ERROR_UNDEFINED_INDEX;
@@ -386,6 +384,28 @@ Status parseFace(
     }
 
     return status;
+}
+
+Status parseGroups(
+        const int numFaces,
+        QChar const * const lineEnd,
+        QChar const *&lineIter,
+        QVector<QString> &groupsNames,
+        QVector<int> &groupsBegins,
+        QVector<int> &groupsEnds)
+{
+    skipWhiteSpace(lineEnd, lineIter);
+    if (isEndOrSpace(lineEnd, lineIter))
+        return STATUS_ERROR_EXPECTED_STRING;
+
+    while (lineIter != lineEnd) {
+        const QChar * const contentBegin = lineIter;
+        while (!isEndOrSpace(lineEnd, lineIter))
+            ++lineIter;
+        groupsNames.append(QStringView(contentBegin, lineIter).toString());
+        // TODO from here
+    }
+    return STATUS_OK;
 }
 
 } // namespace Internal
@@ -403,7 +423,10 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
     QVector<int> facesVertices;
     QVector<int> facesVerticesTexture;
     QVector<int> facesNormals;
-    QVector<int> polyGroups;
+    QVector<QString> groupsNames = {"default"};
+    QVector<int> groupsBegins = {0};
+    QVector<int> groupsEnds;
+    // int numGroupsEndsPending = 1; // == groupsBegins.length() - groupsEnds.length()
 
     while (!input.atEnd()) {
         const QString line = input.readLine();
@@ -425,7 +448,7 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
         case LINETYPE_COMMENT:
             continue;
 
-        case LINETYPE_VERTEX_GEOMETRIC: {
+        case LINETYPE_VERTEX: {
             QVector3D vertex;
             parserResult.status = parseVertexGeometric(lineEnd, lineIter, vertex);
             if (parserResult.status != STATUS_OK) {
@@ -459,15 +482,11 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
         }
 
         case LINETYPE_FACE: {
-            int components[3];
-            bool hasVerticesTexture = false;
-            bool hasNormals = false;
             parserResult.status = parseFace(
                     vertices.length(),
                     verticesTexture.length(),
                     normals.length(),
                     lineEnd, lineIter,
-                    hasVerticesTexture, hasNormals,
                     indicesVertices, indicesVerticesTexture, indicesNormals);
             if (parserResult.status != STATUS_OK) {
                 parserResult.columnNumber = lineIter - line.begin();
@@ -477,6 +496,12 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
             facesVertices.append(indicesVertices.length());
             facesVerticesTexture.append(indicesVerticesTexture.length());
             facesNormals.append(indicesNormals.length());
+
+            break;
+        }
+
+        case LINETYPE_GROUP: {
+            parseGroups(facesVertices.length(), groupsBegins, groupsEnds, groupsNames);
             break;
         }
 
@@ -503,8 +528,7 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
         indicesNormals,
         facesVertices,
         facesVerticesTexture,
-        facesNormals,
-        polyGroups);
+        facesNormals);
 }
 
 ParserResult::ParserResult(Status status):
