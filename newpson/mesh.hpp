@@ -7,6 +7,20 @@
 
 namespace Newpson {
 
+//namespace MeshUtilites {
+
+//isValid();
+
+//namespace Internal {
+
+//areIndicesValid()
+//areFaceIndicesValid()
+//areGroupsIndicesValid()
+
+//}
+
+//}
+
 class Mesh
 {
 public:
@@ -50,7 +64,7 @@ public:
     const QVector<int> &groupsBegins() const;
     const QVector<int> &groupsEnds() const;
 
-    bool isValid() const;
+    bool areLengthsOfFacesIndicesVecotorsEqualAndIndicesVerticesVectorIsValidAndIndicesVerticesTextureVectorIsValidAndIndicesNormalsVectorIsValidAndFaceVerticesIndicesValidAndFaceVerticesTextureInidicesValidAndEtc() const;
 
 private:
     QVector<QVector3D> m_vertices;

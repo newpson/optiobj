@@ -1,5 +1,6 @@
-#include "mesh.hpp"
 #include <QVector3D>
+#include <QDebug>
+#include "mesh.hpp"
 
 namespace Newpson  {
 
@@ -62,35 +63,73 @@ Mesh::Mesh(
     m_groupsEnds(groupsEnds)
 {}
 
-bool Mesh::isValid() const
+bool areIndicesValid(const QVector<int> &indices, const int maxIndex)
+{
+    for (int index : indices) {
+        const bool outOfBounds = index < 0 || index >= maxIndex;
+        if (outOfBounds)
+            return false;
+    }
+    return true;
+}
+
+bool areFaceIndicesValid(const QVector<int> &indices, const int maxIndex)
+{
+    int lastIndex = -1;
+    for (int index : indices) {
+        const bool outOfBounds = index < 0 || index > maxIndex;
+        const bool missordered = index < lastIndex;
+        if (outOfBounds || missordered)
+            return false;
+        lastIndex = index;
+    }
+    return true;
+}
+
+bool areGroupsIndicesValid(const QVector<int> &groupsBegins, const QVector<int> &groupsEnds)
+{
+    Q_ASSERT(groupsBegins.length() == groupsEnds.length());
+    int lastBeginIndex = -1;
+    int lastEndIndex = -1;
+    for (auto beginsIter = groupsBegins.begin(), endsIter = groupsEnds.begin();
+         beginsIter != groupsBegins.end() && endsIter != groupsEnds.end();
+         ++beginsIter, ++endsIter) {
+        const bool invalidBounds = (*beginsIter > *endsIter);
+        const bool missordered = ((*beginsIter < lastBeginIndex) || (*endsIter < lastEndIndex));
+        if (invalidBounds || missordered)
+            return false;
+        lastBeginIndex = *beginsIter;
+        lastEndIndex = *endsIter;
+    }
+
+    return true;
+}
+
+
+bool Mesh::areLengthsOfFacesIndicesVecotorsEqualAndIndicesVerticesVectorIsValidAndIndicesVerticesTextureVectorIsValidAndIndicesNormalsVectorIsValidAndFaceVerticesIndicesValidAndFaceVerticesTextureInidicesValidAndEtc() const
 {
     if (!(m_facesVertices.length() == m_facesVerticesTexture.length()
-            && m_facesVertices.length() == m_facesNormals.length()))
+            && m_facesVertices.length() == m_facesNormals.length())) {
+        return false;
+    }
+
+    if (!areIndicesValid(m_indicesVertices, m_vertices.length()))
         return false;
 
-    for (int index : m_indicesVertices)
-        if (index < 0 || index >= m_vertices.length())
-            return false;
+    if (!areIndicesValid(m_indicesVerticesTexture, m_verticesTexture.length()))
+        return false;
 
-    for (int index : m_indicesVerticesTexture)
-        if (index < 0 || index >= m_verticesTexture.length())
-            return false;
+    if (!areIndicesValid(m_indicesNormals, m_normals.length()))
+        return false;
 
-    for (int index : m_indicesNormals)
-        if (index < 0 || index >= m_normals.length())
-            return false;
+    if (!areFaceIndicesValid(m_facesVertices, m_indicesVertices.length()))
+        return false;
 
-    for (int index : m_facesVertices)
-        if (index < 0 || index > m_indicesVertices.length())
-            return false;
+    if (!areFaceIndicesValid(m_facesVerticesTexture, m_indicesVerticesTexture.length()))
+        return false;
 
-    for (int index : m_facesVerticesTexture)
-        if (index < 0 || index > m_indicesVerticesTexture.length())
-            return false;
-
-    for (int index : m_facesNormals)
-        if (index < 0 || index > m_indicesNormals.length())
-            return false;
+    if (!areFaceIndicesValid(m_facesNormals, m_indicesNormals.length()))
+        return false;
 
     const bool hasNoGroups = m_groupsBegins.isEmpty() || m_groupsEnds.isEmpty() || m_groupsNames.isEmpty();
     if (hasNoGroups)
@@ -98,6 +137,9 @@ bool Mesh::isValid() const
 
     const bool hasNoDefaultGroup = m_groupsBegins[0] != 0 || m_groupsNames[0] != "default";
     if (hasNoDefaultGroup)
+        return false;
+
+    if (!areGroupsIndicesValid(m_groupsBegins, m_groupsEnds))
         return false;
 
     return true;
