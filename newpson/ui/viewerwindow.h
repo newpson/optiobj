@@ -5,11 +5,15 @@
 #include <QWidget>
 #include "ui_viewerwindow.h"
 
-class ViewerWindow: public QMainWindow, Ui::ViewerWindow
+namespace Newpson::Ui {
+
+class ViewerWindow: public QMainWindow, public Ui::ViewerWindow
 {
     Q_OBJECT
 public:
     ViewerWindow(QWidget *parent = nullptr);
 };
+
+} // namespace Newpson::Ui
 
 #endif

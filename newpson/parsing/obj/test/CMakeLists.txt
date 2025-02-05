@@ -1,12 +1,12 @@
-add_executable(Newpson_Parsing_OBJ_Test_Parser)
-target_sources(Newpson_Parsing_OBJ_Test_Parser
+add_executable(newpson_parsing_obj_test_parser)
+target_sources(newpson_parsing_obj_test_parser
     PRIVATE
     main.cpp
     PUBLIC
     parser.h)
-target_link_libraries(Newpson_Parsing_OBJ_Test_Parser
+target_link_libraries(newpson_parsing_obj_test_parser
     PRIVATE
-    Newpson_Mesh
-    Newpson_Parsing_OBJ_Parser
+    newpson_mesh
+    newpson_parsing_obj_parser
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Test)

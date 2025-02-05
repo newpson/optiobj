@@ -6,7 +6,10 @@
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLBuffer>
-#include <QOpenGLVertexArrayObject>
+#include <QVector>
+#include "mesh.h"
+
+namespace Newpson::Ui {
 
 class GLWidget: public QOpenGLWidget, protected QOpenGLFunctions
 {
@@ -20,14 +23,17 @@ protected:
     void resizeGL(int width, int height) override;
 
 private:
+    Newpson::Mesh m_mesh;
+    QOpenGLBuffer m_objVbo;
+    QVector<float> m_rawData;
+
     QOpenGLShaderProgram m_program;
-//    QMatrix4x4 m_model;
     QMatrix4x4 m_projection;
     QMatrix4x4 m_view;
-    QOpenGLBuffer m_objVbo;
     int m_projectionLoc;
     int m_viewLoc;
 };
 
+} // namespace Newpson::Ui
 
 #endif

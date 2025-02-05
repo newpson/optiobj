@@ -5,7 +5,7 @@ int main(int argc, char *argv[])
 {
 	QApplication app(argc, argv);
 
-	ViewerWindow viewerWindow;
+    Newpson::Ui::ViewerWindow viewerWindow;
 	viewerWindow.show();
 
 	return app.exec();

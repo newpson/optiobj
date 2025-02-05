@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ViewerWindow</class>
- <widget class="QMainWindow" name="ViewerWindow">
+ <class>Newpson::Ui::ViewerWindow</class>
+ <widget class="QMainWindow" name="Newpson::Ui::ViewerWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="GLWidget" name="openGLWidget"/>
+     <widget class="Newpson::Ui::GLWidget" name="openGLWidget"/>
     </item>
    </layout>
   </widget>
@@ -26,7 +26,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
   </widget>
@@ -34,7 +34,7 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>GLWidget</class>
+   <class>Newpson::Ui::GLWidget</class>
    <extends>QOpenGLWidget</extends>
    <header>glwidget.h</header>
   </customwidget>

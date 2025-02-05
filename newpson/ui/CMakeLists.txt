@@ -8,8 +8,10 @@ target_sources(app_gui
     viewerwindow.h
     glwidget.h)
 target_include_directories(app_gui
-    PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+    PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(app_gui
     PUBLIC
-    Qt::Widgets)
-
+    newpson_mesh
+    newpson_parsing_obj_parser
+    Qt::Widgets Qt::OpenGLWidgets)
