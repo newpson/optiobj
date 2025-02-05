@@ -3,7 +3,7 @@ target_sources(Newpson_Mesh
     PRIVATE
     mesh.cpp
     PUBLIC
-    mesh.hpp)
+    mesh.h)
 target_include_directories(Newpson_Mesh
     PUBLIC
     ${CMAKE_CURRENT_LIST_DIR})

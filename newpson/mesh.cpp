@@ -1,6 +1,6 @@
 #include <QVector3D>
 #include <QDebug>
-#include "mesh.hpp"
+#include "mesh.h"
 
 namespace Newpson  {
 

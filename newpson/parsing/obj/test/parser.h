@@ -4,7 +4,7 @@
 #include <QVector>
 #include <QVector2D>
 #include <QVector3D>
-#include "mesh.hpp"
+#include "mesh.h"
 #include "obj/parser.h"
 #include "obj/parser-internal.h"
 
@@ -256,7 +256,7 @@ private slots:
 
         const Newpson::Mesh mesh = Newpson::Parsing::Obj::load(QTextStream(&input), parserResult);
         QCOMPARE(parserResult.status, STATUS_OK);
-        QCOMPARE(mesh.isValid(), true);
+        QCOMPARE(mesh.areLengthsOfFacesIndicesVecotorsEqualAndIndicesVerticesVectorIsValidAndIndicesVerticesTextureVectorIsValidAndIndicesNormalsVectorIsValidAndFaceVerticesIndicesValidAndFaceVerticesTextureInidicesValidAndEtc(), true);
 
         const QVector<QVector3D> &vertices = mesh.vertices();
         QCOMPARE(vertices.length(), 8);

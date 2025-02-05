@@ -6,7 +6,7 @@
 #include <QVector3D>
 #include <QDebug>
 
-#include "mesh.hpp"
+#include "mesh.h"
 #include "parser.h"
 #include "parser-internal.h"
 
@@ -58,6 +58,7 @@ void skipUntilContent(QChar const * const lineEnd, QChar const *&lineIter)
         ++lineIter;
 }
 
+
 void skipUntilDelimiter(QChar const * const lineEnd, QChar const *&lineIter)
 {
     while (lineIter < lineEnd && !(lineIter->isSpace() || *lineIter == '/'))
@@ -67,6 +68,12 @@ void skipUntilDelimiter(QChar const * const lineEnd, QChar const *&lineIter)
 bool isEndOrSpace(QChar const * const lineEnd, QChar const * const lineIter)
 {
     return (lineIter >= lineEnd || lineIter->isSpace());
+}
+
+void skipUntilWhiteSpace(QChar const * const lineEnd, QChar const *&lineIter)
+{
+    while (!isEndOrSpace(lineEnd, lineIter))
+        ++lineIter;
 }
 
 bool isNextCharEndOrSpace(QChar const * const lineEnd, QChar const *&lineIter)
@@ -142,7 +149,7 @@ Status parseFloat(
         return STATUS_ERROR_EXPECTED_FLOAT;
 
     const QChar * const contentBegin = lineIter;
-    skipUntilDelimiter(lineEnd, lineIter);
+    skipUntilWhiteSpace(lineEnd, lineIter);
     const QStringView content(contentBegin, lineIter);
 
     bool isParseSuccessful = false;
@@ -466,7 +473,6 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
 
         // because of 'mixing const and nonconst iterators' clang warn
         const QString line(lineBuffer);
-        qDebug() << "Line:" << line;
 
         QChar const *lineIter = line.begin();
         QChar const * const lineEnd = line.end();
