@@ -13,3 +13,4 @@ target_link_libraries(Newpson_Mesh
     Qt${QT_VERSION_MAJOR}::Gui)
 
 add_subdirectory(parsing/obj)
+add_subdirectory(ui)
