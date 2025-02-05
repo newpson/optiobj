@@ -41,6 +41,81 @@ public:
     {}
 
 private slots:
+    void testSkipWhiteSpace_data()
+    {
+        QTest::addColumn<QString>("input");
+        QTest::addColumn<QString>("remainder");
+        QTest::newRow("empty") << "" << "";
+        QTest::newRow("space") << "\u0020" << "";
+        QTest::newRow("spaces") << "\u0020\u0020\u0020\u0020\u0020\u0020\u0020" << "";
+        QTest::newRow("tab") << "\u000B" << "";
+        QTest::newRow("tabs") << "\u000B\u000B\u000B\u000B\u000B\u000B\u000B" << "";
+        QTest::newRow("spaces+tabs") << "\u000B\u0020\u000B\u000B\u0020\u000B\u000B\u000B\u000B\u0020" << "";
+        QTest::newRow("spaces+tabs") << "\u000B\u0020\u000B\u000B\u0020\u000B\u000B\u000B\u000B\u0020" << "";
+
+        QTest::newRow("content") << "a" << "a";
+        QTest::newRow("space+content") << " a" << "a";
+        QTest::newRow("spaces+content") << "    a" << "a";
+        QTest::newRow("content+space") << "a " << "a ";
+        QTest::newRow("content+spaces") << "a    " << "a    ";
+    }
+
+    void testSkipWhiteSpace()
+    {
+        QFETCH(const QString, input);
+        QFETCH(const QString, remainder);
+
+        QString output;
+        QChar const *lineIter = input.begin();
+        QChar const * const lineEnd = input.end();
+        Newpson::Parsing::Obj::Internal::skipWhiteSpace(lineEnd, lineIter);
+        output.append(QStringView(lineIter, lineEnd));
+
+        QCOMPARE(output, remainder);
+    }
+
+    void testParseFloat_data()
+    {
+        QTest::addColumn<QString>("input");
+        QTest::addColumn<Newpson::Parsing::Obj::Status>("status");
+        QTest::newRow("empty") << "" << STATUS_ERROR_EXPECTED_FLOAT;
+        QTest::newRow("integer+trash-ascii") << "123abc" << STATUS_ERROR_EXPECTED_FLOAT;
+        QTest::newRow("integer+trash-unicode") << "123\u1234\u1232\u0987" << STATUS_ERROR_EXPECTED_FLOAT;
+        QTest::newRow("trash-ascii+integer") << "abc123" << STATUS_ERROR_EXPECTED_FLOAT;
+        QTest::newRow("trash-unicode+integer") << "\u1234\u1232\u0987123" << STATUS_ERROR_EXPECTED_FLOAT;
+        QTest::newRow("integer+slash") << "123/" << STATUS_ERROR_EXPECTED_FLOAT;
+        QTest::newRow("integer+doubleslash") << "123//" << STATUS_ERROR_EXPECTED_FLOAT;
+        QTest::newRow("slash+integer") << "/123" << STATUS_ERROR_EXPECTED_FLOAT;
+        QTest::newRow("doubleslash+integer") << "//123" << STATUS_ERROR_EXPECTED_FLOAT;
+        QTest::newRow("integer") << "123" << STATUS_OK;
+        QTest::newRow("float") << "123.000" << STATUS_OK;
+        QTest::newRow("float-nofrac") << "123." << STATUS_OK;
+        QTest::newRow("float-noint") << ".000" << STATUS_OK;
+        QTest::newRow("float-positive") << "+123.0" << STATUS_OK;
+        QTest::newRow("float-negative") << "-123.0" << STATUS_OK;
+        QTest::newRow("float-enot") << "123e5" << STATUS_OK;
+        QTest::newRow("float-enot-0") << "123e05" << STATUS_OK;
+        QTest::newRow("float-enot-plus") << "123e+5" << STATUS_OK;
+        QTest::newRow("float-enot-minus") << "123e-5" << STATUS_OK;
+        QTest::newRow("wspace-left") << " 123.0" << STATUS_OK;
+        QTest::newRow("wspaces-left") << "    123.0" << STATUS_OK;
+        QTest::newRow("wspaces-right") << "123.0    " << STATUS_OK;
+        QTest::newRow("wspaces-left+right") << "    123.0    " << STATUS_OK;
+    }
+
+    void testParseFloat()
+    {
+        QFETCH(const QString, input);
+        QFETCH(Newpson::Parsing::Obj::Status, status);
+
+        float parsedValue;
+        QChar const *lineIter = input.begin();
+        QChar const * const lineEnd = input.end();
+        parserResult.status = Newpson::Parsing::Obj::Internal::parseFloat(lineEnd, lineIter, parsedValue);
+        qDebug() << parserResult.status;
+        QCOMPARE(parserResult.status, status);
+    }
+
     void testNumArguments_data()
     {
         QTest::addColumn<QString>("input");

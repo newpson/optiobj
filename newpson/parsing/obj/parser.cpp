@@ -52,14 +52,7 @@ bool skipWhiteSpace(QChar const * const lineEnd, QChar const *&lineIter)
     return hasSkipped;
 }
 
-void skipUntilContent(QChar const * const lineEnd, QChar const *&lineIter)
-{
-    while (lineIter < lineEnd && (lineIter->isSpace() || *lineIter == '/'))
-        ++lineIter;
-}
-
-
-void skipUntilDelimiter(QChar const * const lineEnd, QChar const *&lineIter)
+void skipUntilSlashOrSpace(QChar const * const lineEnd, QChar const *&lineIter)
 {
     while (lineIter < lineEnd && !(lineIter->isSpace() || *lineIter == '/'))
         ++lineIter;
@@ -126,7 +119,7 @@ Status parseInteger(
 //        return STATUS_ERROR_EXPECTED_FLOAT;
 
     const QChar * const contentBegin = lineIter;
-    skipUntilDelimiter(lineEnd, lineIter);
+    skipUntilSlashOrSpace(lineEnd, lineIter);
     const QStringView content(contentBegin, lineIter);
 
     bool isParseSuccessful = false;

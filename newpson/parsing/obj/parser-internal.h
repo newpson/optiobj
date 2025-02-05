@@ -26,43 +26,34 @@ enum LineType {
 bool isEndOrSpace(QChar const * const lineEnd, QChar const * const lineIter);
 bool hasMoreComponents(QChar const * const lineEnd, QChar const *&lineIter);
 bool skipWhiteSpace(QChar const * const lineEnd, QChar const *&lineIter);
-void skipUntilDelimiter(QChar const * const lineEnd, QChar const *&lineIter);
-void skipUntilContent(QChar const * const lineEnd, QChar const *&lineIter);
+void skipUntilSlashOrSpace(QChar const * const lineEnd, QChar const *&lineIter);
 bool isNextCharEndOrSpace(QChar const * const lineEnd, QChar const *&lineIter);
-
-void switchActiveGroups(
-    const int numFaces,
-    const int numNextActiveGroups,
-    QVector<int> &groupsBegins,
-    QVector<int> &groupsEnds);
-void fillRemainingGroupsEnds(
-    const int numFaces,
-    const int numActiveGroups,
-    QVector<int> &groupsEnds);
+void fillRemainingGroupsEnds(const int numFaces, const int numActiveGroups, QVector<int> &groupsEnds);
+void switchActiveGroups(const int numFaces, const int numNextActiveGroups, QVector<int> &groupsBegins, QVector<int> &groupsEnds);
 
 LineType parseLineType(QChar const * const lineEnd, QChar const *&lineIter);
 Status parseFloat(QChar const * const lineEnd, QChar const *&lineIter, float &outFloat);
 Status parseInteger(QChar const * const lineEnd, QChar const *&lineIter, int &outInteger);
 Status parseVertexGeometric(QChar const * const lineEnd, QChar const *&lineIter, QVector3D &outVertex);
 Status parseVertexTexture(QChar const * const lineEnd, QChar const *&lineIter, QVector2D &outVertex);
-Status parsePolygroup(QChar const * const lineEnd, QChar const *&lineIter, QString &outName);
 Status parseFace(
-    const int numVerticesGeometric,
-    const int numVerticesTexture,
-    const int numNormals,
-    QChar const * const lineEnd,
-    QChar const *&lineIter,
-    QVector<int> &outFaceGeometric,
-    QVector<int> &outFaceTexture,
-    QVector<int> &outFaceNormal);
+        const int numVerticesGeometric,
+        const int numVerticesTexture,
+        const int numNormals,
+        QChar const * const lineEnd,
+        QChar const *&lineIter,
+        QVector<int> &outFaceGeometric,
+        QVector<int> &outFaceTexture,
+        QVector<int> &outFaceNormal);
 Status parseFaceVertexComponents(
-    QChar const * const lineEnd,
-    QChar const *&lineIter,
-    int &indexGeometric,
-    bool &hasIndexTexture,
-    int &indexTexture,
-    bool &hasIndexNormal,
-    int &indexNormal);
+        QChar const * const lineEnd,
+        QChar const *&lineIter,
+        int &indexGeometric,
+        bool &hasIndexTexture,
+        int &indexTexture,
+        bool &hasIndexNormal,
+        int &indexNormal);
+Status parseGroupsNames(QChar const * const lineEnd, QChar const *&lineIter, QVector<QString> &groupsNames);
 
 } // namespace Newpson::Parsing::Obj::Internal
 
