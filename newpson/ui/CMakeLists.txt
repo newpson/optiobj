@@ -14,4 +14,9 @@ target_link_libraries(app_gui
     PUBLIC
     newpson_mesh
     newpson_parsing_obj_parser
-    Qt::Widgets Qt::OpenGLWidgets)
+    Qt::Widgets)
+if(${QT_VERSION_MAJOR} EQUAL 6)
+    target_link_libraries(app_gui
+        PUBLIC
+        Qt::OpenGLWidgets)
+endif()
