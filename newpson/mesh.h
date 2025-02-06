@@ -24,6 +24,24 @@ namespace Newpson {
 class Mesh
 {
 public:
+    enum Status {
+        VALIDATION_OK,
+
+        VALIDATION_ERROR,
+        VALIDATION_ERROR_BEGIN,
+        VALIDATION_ERROR_FACES_INCOHERENT,
+        VALIDATION_ERROR_INVALID_INDICES_VERTICES,
+        VALIDATION_ERROR_INVALID_INDICES_VERTICES_TEXTURE,
+        VALIDATION_ERROR_INVALID_INDICES_NORMALS,
+        VALIDATION_ERROR_INVALID_INDICES_GROUPS,
+        VALIDATION_ERROR_INVALID_FACES_VERTICES,
+        VALIDATION_ERROR_INVALID_FACES_VERTICES_TEXTURE,
+        VALIDATION_ERROR_INVALID_FACES_NORMALS,
+        VALIDATION_ERROR_NO_GROUPS,
+        VALIDATION_ERROR_NO_GROUP_DEFAULT,
+        VALIDATION_ERROR_END,
+    };
+
     Mesh();
 
     Mesh(
@@ -64,7 +82,7 @@ public:
     const QVector<int> &groupsBegins() const;
     const QVector<int> &groupsEnds() const;
 
-    bool areLengthsOfFacesIndicesVecotorsEqualAndIndicesVerticesVectorIsValidAndIndicesVerticesTextureVectorIsValidAndIndicesNormalsVectorIsValidAndFaceVerticesIndicesValidAndFaceVerticesTextureInidicesValidAndEtc() const;
+    Mesh::Status areLengthsOfFacesIndicesVecotorsEqualAndIndicesVerticesVectorIsValidAndIndicesVerticesTextureVectorIsValidAndIndicesNormalsVectorIsValidAndFaceVerticesIndicesValidAndFaceVerticesTextureInidicesValidAndEtc() const;
 
 private:
     QVector<QVector3D> m_vertices;

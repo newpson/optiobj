@@ -106,43 +106,44 @@ bool areGroupsIndicesValid(const QVector<int> &groupsBegins, const QVector<int> 
 }
 
 
-bool Mesh::areLengthsOfFacesIndicesVecotorsEqualAndIndicesVerticesVectorIsValidAndIndicesVerticesTextureVectorIsValidAndIndicesNormalsVectorIsValidAndFaceVerticesIndicesValidAndFaceVerticesTextureInidicesValidAndEtc() const
+Mesh::Status Mesh::areLengthsOfFacesIndicesVecotorsEqualAndIndicesVerticesVectorIsValidAndIndicesVerticesTextureVectorIsValidAndIndicesNormalsVectorIsValidAndFaceVerticesIndicesValidAndFaceVerticesTextureInidicesValidAndEtc() const
 {
-    if (!(m_facesVertices.length() == m_facesVerticesTexture.length()
-            && m_facesVertices.length() == m_facesNormals.length())) {
-        return false;
+    bool areFacesCoherent = (m_facesVertices.length() == m_facesVerticesTexture.length()
+                             && m_facesVertices.length() == m_facesNormals.length());
+    if (!areFacesCoherent) {
+        return VALIDATION_ERROR_FACES_INCOHERENT;
     }
 
     if (!areIndicesValid(m_indicesVertices, m_vertices.length()))
-        return false;
+        return VALIDATION_ERROR_INVALID_INDICES_VERTICES;
 
     if (!areIndicesValid(m_indicesVerticesTexture, m_verticesTexture.length()))
-        return false;
+        return VALIDATION_ERROR_INVALID_INDICES_VERTICES_TEXTURE;
 
     if (!areIndicesValid(m_indicesNormals, m_normals.length()))
-        return false;
+        return VALIDATION_ERROR_INVALID_INDICES_NORMALS;
 
     if (!areFaceIndicesValid(m_facesVertices, m_indicesVertices.length()))
-        return false;
+        return VALIDATION_ERROR_INVALID_FACES_VERTICES;
 
     if (!areFaceIndicesValid(m_facesVerticesTexture, m_indicesVerticesTexture.length()))
-        return false;
+        return VALIDATION_ERROR_INVALID_FACES_VERTICES_TEXTURE;
 
     if (!areFaceIndicesValid(m_facesNormals, m_indicesNormals.length()))
-        return false;
+        return VALIDATION_ERROR_INVALID_FACES_NORMALS;
 
     const bool hasNoGroups = m_groupsBegins.isEmpty() || m_groupsEnds.isEmpty() || m_groupsNames.isEmpty();
     if (hasNoGroups)
-        return false;
+        return VALIDATION_ERROR_NO_GROUPS;
 
     const bool hasNoDefaultGroup = m_groupsBegins[0] != 0 || m_groupsNames[0] != "default";
     if (hasNoDefaultGroup)
-        return false;
+        return VALIDATION_ERROR_NO_GROUP_DEFAULT;
 
     if (!areGroupsIndicesValid(m_groupsBegins, m_groupsEnds))
-        return false;
+        return VALIDATION_ERROR_INVALID_INDICES_GROUPS;
 
-    return true;
+    return VALIDATION_OK;
 }
 
 const QVector<QVector3D> &Mesh::vertices() const

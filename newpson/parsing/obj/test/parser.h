@@ -9,6 +9,7 @@
 #include "obj/parser-internal.h"
 
 Q_DECLARE_METATYPE(Newpson::Parsing::Obj::Status)
+Q_DECLARE_METATYPE(Newpson::Mesh::Status)
 
 namespace Newpson::Parsing::Obj::Test {
 
@@ -331,7 +332,7 @@ private slots:
 
         const Newpson::Mesh mesh = Newpson::Parsing::Obj::load(QTextStream(&input), parserResult);
         QCOMPARE(parserResult.status, STATUS_OK);
-        QCOMPARE(mesh.areLengthsOfFacesIndicesVecotorsEqualAndIndicesVerticesVectorIsValidAndIndicesVerticesTextureVectorIsValidAndIndicesNormalsVectorIsValidAndFaceVerticesIndicesValidAndFaceVerticesTextureInidicesValidAndEtc(), true);
+        QCOMPARE(mesh.areLengthsOfFacesIndicesVecotorsEqualAndIndicesVerticesVectorIsValidAndIndicesVerticesTextureVectorIsValidAndIndicesNormalsVectorIsValidAndFaceVerticesIndicesValidAndFaceVerticesTextureInidicesValidAndEtc(), Mesh::VALIDATION_OK);
 
         const QVector<QVector3D> &vertices = mesh.vertices();
         QCOMPARE(vertices.length(), 8);
