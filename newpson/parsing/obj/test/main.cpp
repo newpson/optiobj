@@ -1,6 +1,5 @@
-#include "parser.h"
-
 #include <QTest>
+#include "test/parser.h"
 
 int main()
 {

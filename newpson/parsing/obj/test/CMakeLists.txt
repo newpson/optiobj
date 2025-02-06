@@ -2,8 +2,12 @@ add_executable(newpson_parsing_obj_test_parser)
 target_sources(newpson_parsing_obj_test_parser
     PRIVATE
     main.cpp
+    parser.cpp
     PUBLIC
     parser.h)
+target_include_directories(newpson_parsing_obj_test_parser
+    PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}/..)
 target_link_libraries(newpson_parsing_obj_test_parser
     PRIVATE
     newpson_mesh
