@@ -4,10 +4,10 @@
 #include <QVector>
 #include <QVector2D>
 #include <QVector3D>
-#include "mesh.h"
-#include "obj/parser.h"
-#include "obj/parser-internal.h"
-#include "test/parser.h"
+#include "Newpson/mesh.h"
+#include "Obj/parser.h"
+#include "Obj/parser-internal.h"
+#include "ParserUnitTests/parser.h"
 
 namespace Newpson::Parsing::Obj::Test {
 

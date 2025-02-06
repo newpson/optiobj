@@ -1,7 +1,7 @@
 #ifndef NEWPSON_PARSING_OBJ_PARSER_H
 #define NEWPSON_PARSING_OBJ_PARSER_H
 
-#include "mesh.h"
+#include "Newpson/mesh.h"
 
 #include <QDebug>
 #include <QFile>

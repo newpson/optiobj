@@ -4,8 +4,8 @@
 #include <QObject>
 #include <QString>
 #include <QTest>
-#include "mesh.h"
-#include "obj/parser.h"
+#include "Newpson/mesh.h"
+#include "Obj/parser.h"
 
 Q_DECLARE_METATYPE(Newpson::Parsing::Obj::Status)
 Q_DECLARE_METATYPE(Newpson::Mesh::Status)
