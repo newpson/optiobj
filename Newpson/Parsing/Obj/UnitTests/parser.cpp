@@ -7,7 +7,7 @@
 #include "Newpson/mesh.h"
 #include "Obj/parser.h"
 #include "Obj/parser-internal.h"
-#include "ParserUnitTests/parser.h"
+#include "UnitTests/parser.h"
 
 namespace Newpson::Parsing::Obj::Test {
 

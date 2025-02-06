@@ -1,5 +1,5 @@
 #include <QTest>
-#include "ParserUnitTests/parser.h"
+#include "UnitTests/parser.h"
 
 int main()
 {

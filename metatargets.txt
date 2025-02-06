@@ -1,0 +1,5 @@
+MT_NEWPSON_MESH = "$$PWD/Newpson/Mesh.pri"
+MT_NEWPSON_PARSER_OBJ_UNITTESTS_RUN = "$$PWD/Newpson/Parsing/Obj/RunUnitTests/ParserRunUnitTests.pri"
+MT_NEWPSON_PARSER_OBJ = "$$PWD/Newpson/Parsing/Obj/Parser.pri"
+MT_NEWPSON_PARSER_OBJ_DEMO = "$$PWD/Newpson/Parsing/Obj/Demo/ParserDemo.pri"
+MT_NEWPSON_PARSER_OBJ_UNITTESTS = "$$PWD/Newpson/Parsing/Obj/UnitTests/UnitTests.pri"

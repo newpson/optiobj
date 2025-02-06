@@ -1,0 +1,13 @@
+!NEWPSON_PARSER_OBJ_UNITTESTS_PRI {
+CONFIG += NEWPSON_PARSER_OBJ_UNITTESTS_PRI
+
+INCLUDEPATH *= $$clean_path($$PWD/..)
+include($$MT_NEWPSON_PARSER_OBJ)
+include($$MT_NEWPSON_MESH)
+
+SOURCES += \
+    $$PWD/parser.cpp
+HEADERS += \
+    $$PWD/parser.h
+
+}
