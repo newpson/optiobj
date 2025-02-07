@@ -15,7 +15,6 @@ public:
 
         VALIDATION_ERROR,
         VALIDATION_ERROR_BEGIN,
-        VALIDATION_ERROR_FACES_INCOHERENT,
         VALIDATION_ERROR_INVALID_INDICES_VERTICES,
         VALIDATION_ERROR_INVALID_INDICES_VERTICES_TEXTURE,
         VALIDATION_ERROR_INVALID_INDICES_NORMALS,
@@ -37,9 +36,7 @@ public:
         const QVector<int> &indicesVertices,
         const QVector<int> &indicesVerticesTexture,
         const QVector<int> &indicesNormals,
-        const QVector<int> &facesVertices,
-        const QVector<int> &facesVerticesTexture,
-        const QVector<int> &facesNormals);
+        const QVector<int> &facesEnds);
 
     Mesh(
         const QVector<QVector3D> &vertices,
@@ -48,9 +45,7 @@ public:
         const QVector<int> &indicesVertices,
         const QVector<int> &indicesVerticesTexture,
         const QVector<int> &indicesNormals,
-        const QVector<int> &facesVertices,
-        const QVector<int> &facesVerticesTexture,
-        const QVector<int> &facesNormals,
+        const QVector<int> &facesEnds,
         const QVector<QString> &groupsNames,
         const QVector<int> &groupsEnds);
 
@@ -60,9 +55,7 @@ public:
     const QVector<int> &indicesVertices() const;
     const QVector<int> &indicesVerticesTexture() const;
     const QVector<int> &indicesNormals() const;
-    const QVector<int> &facesVertices() const;
-    const QVector<int> &facesVerticesTexture() const;
-    const QVector<int> &facesNormals() const;
+    const QVector<int> &facesEnds() const;
     const QVector<QString> &groupsNames() const;
     const QVector<int> &groupsEnds() const;
 
@@ -76,9 +69,7 @@ private:
     QVector<int> m_indicesVertices;
     QVector<int> m_indicesVerticesTexture;
     QVector<int> m_indicesNormals;
-    QVector<int> m_facesVertices;
-    QVector<int> m_facesVerticesTexture;
-    QVector<int> m_facesNormals;
+    QVector<int> m_facesEnds;
     QVector<QString> m_groupsNames = {"default"};
     QVector<int> m_groupsEnds = {0};
 };

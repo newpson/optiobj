@@ -29,6 +29,8 @@ bool hasMoreComponents(QChar const * const lineEnd, QChar const *&lineIter);
 void skipWhiteSpace(QChar const * const lineEnd, QChar const *&lineIter);
 void skipUntilSlashOrSpace(QChar const * const lineEnd, QChar const *&lineIter);
 
+int indexMakeAbsolute(const int numComponents, const int index);
+
 LineType parseLineType(QChar const * const lineEnd, QChar const *&lineIter);
 Status parseFloat(QChar const * const lineEnd, QChar const *&lineIter, float &outFloat);
 Status parseInteger(QChar const * const lineEnd, QChar const *&lineIter, int &outInteger);

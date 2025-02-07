@@ -11,9 +11,7 @@ Mesh::Mesh(
     const QVector<int> &indicesVertices,
     const QVector<int> &indicesVerticesTexture,
     const QVector<int> &indicesNormals,
-    const QVector<int> &facesVertices,
-    const QVector<int> &facesVerticesTexture,
-    const QVector<int> &facesNormals):
+    const QVector<int> &facesEnds):
 
     m_vertices(vertices),
     m_verticesTexture(verticesTexture),
@@ -21,11 +19,11 @@ Mesh::Mesh(
     m_indicesVertices(indicesVertices),
     m_indicesVerticesTexture(indicesVerticesTexture),
     m_indicesNormals(indicesNormals),
-    m_facesVertices(facesVertices),
-    m_facesVerticesTexture(facesVerticesTexture),
-    m_facesNormals(facesNormals),
-    m_groupsEnds({facesVertices.length()})
-{}
+    m_facesEnds(facesEnds)
+{
+    const int numIndicesVertices = facesEnds.length();
+    m_groupsEnds = {numIndicesVertices};
+}
 
 Mesh::Mesh(
     const QVector<QVector3D> &vertices,
@@ -34,9 +32,7 @@ Mesh::Mesh(
     const QVector<int> &indicesVertices,
     const QVector<int> &indicesVerticesTexture,
     const QVector<int> &indicesNormals,
-    const QVector<int> &facesVertices,
-    const QVector<int> &facesVerticesTexture,
-    const QVector<int> &facesNormals,
+    const QVector<int> &facesEnds,
     const QVector<QString> &groupsNames,
     const QVector<int> &groupsEnds):
 
@@ -46,9 +42,7 @@ Mesh::Mesh(
     m_indicesVertices(indicesVertices),
     m_indicesVerticesTexture(indicesVerticesTexture),
     m_indicesNormals(indicesNormals),
-    m_facesVertices(facesVertices),
-    m_facesVerticesTexture(facesVerticesTexture),
-    m_facesNormals(facesNormals),
+    m_facesEnds(facesEnds),
     m_groupsNames(groupsNames),
     m_groupsEnds(groupsEnds)
 {}
@@ -63,7 +57,7 @@ bool areIndicesValid(const QVector<int> &indices, const int maxIndex)
     return true;
 }
 
-bool areFaceIndicesValid(const QVector<int> &indices, const int maxIndex)
+bool areFaceEndsValid(const QVector<int> &indices, const int maxIndex)
 {
     int lastIndex = -1;
     for (int index : indices) {
@@ -78,12 +72,6 @@ bool areFaceIndicesValid(const QVector<int> &indices, const int maxIndex)
 
 Mesh::ValidationResult Mesh::checkConsistency() const
 {
-    bool areFacesCoherent = (m_facesVertices.length() == m_facesVerticesTexture.length()
-                             && m_facesVertices.length() == m_facesNormals.length());
-    if (!areFacesCoherent) {
-        return VALIDATION_ERROR_FACES_INCOHERENT;
-    }
-
     if (!areIndicesValid(m_indicesVertices, m_vertices.length()))
         return VALIDATION_ERROR_INVALID_INDICES_VERTICES;
 
@@ -93,14 +81,8 @@ Mesh::ValidationResult Mesh::checkConsistency() const
     if (!areIndicesValid(m_indicesNormals, m_normals.length()))
         return VALIDATION_ERROR_INVALID_INDICES_NORMALS;
 
-    if (!areFaceIndicesValid(m_facesVertices, m_indicesVertices.length()))
+    if (!areFaceEndsValid(m_facesEnds, m_indicesVertices.length()))
         return VALIDATION_ERROR_INVALID_FACES_VERTICES;
-
-    if (!areFaceIndicesValid(m_facesVerticesTexture, m_indicesVerticesTexture.length()))
-        return VALIDATION_ERROR_INVALID_FACES_VERTICES_TEXTURE;
-
-    if (!areFaceIndicesValid(m_facesNormals, m_indicesNormals.length()))
-        return VALIDATION_ERROR_INVALID_FACES_NORMALS;
 
     const bool hasNoGroups = m_groupsEnds.isEmpty() || m_groupsNames.isEmpty();
     if (hasNoGroups)
@@ -110,30 +92,20 @@ Mesh::ValidationResult Mesh::checkConsistency() const
     if (hasNoDefaultGroup)
         return VALIDATION_ERROR_NO_GROUP_DEFAULT;
 
-    if (!areFaceIndicesValid(m_groupsEnds, m_facesVertices.length()))
+    // FIXME rename more general
+    if (!areFaceEndsValid(m_groupsEnds, m_facesEnds.length()))
         return VALIDATION_ERROR_INVALID_INDICES_GROUPS;
 
     return VALIDATION_OK;
 }
-
-//bool faceHasComponent(QVector<int> facesEnds, int index)
-//{
-//    if (facesEnds.isEmpty())
-//        return false;
-
-//    if (index == 0)
-//        return (facesEnds[0] != 0);
-
-//    return (facesEnds[index] - facesEnds[index-1]) > 0;
-//}
 
 //Mesh Mesh::triangulate() const
 //{
 //    QVector<int> indicesVertices;
 //    QVector<int> indicesVerticesTexture;
 //    QVector<int> indicesNormals;
-//    QVector<int> facesVertices;
-//    QVector<int> facesVerticesTexture;
+//    QVector<int> facesEnds;
+//    QVector<int> facesEndsTexture;
 //    QVector<int> facesNormals;
 //    QVector<int> groupsEnds;
 
@@ -144,8 +116,8 @@ Mesh::ValidationResult Mesh::checkConsistency() const
 //        qDebug() << "{";
 //        int faceEnd = -1;
 //        for (int i = groupBegin; i < groupEnd; ++i) {
-//            qDebug() << i << "has normals:" << faceHasComponent(m_facesVertices, i);
-////            faceEnd = m_facesVertices[i];
+//            qDebug() << i << "has normals:" << faceHasComponent(m_facesEnds, i);
+////            faceEnd = m_facesEnds[i];
 ////            qDebug() << "  {";
 ////            for (int j = faceBegin; j < faceEnd; ++j) {
 ////                    qDebug() << "    " << m_indicesVertices[j];
@@ -164,8 +136,8 @@ Mesh::ValidationResult Mesh::checkConsistency() const
 ////                indicesVertices,
 ////                indicesVerticesTexture,
 ////                indicesNormals,
-////                facesVertices,
-////                facesVerticesTexture,
+////                facesEnds,
+////                facesEndsTexture,
 ////                facesNormals,
 ////                m_groupsNames,
 ////                groupsEnds);
@@ -201,19 +173,9 @@ const QVector<int> &Mesh::indicesNormals() const
     return m_indicesNormals;
 }
 
-const QVector<int> &Mesh::facesVertices() const
+const QVector<int> &Mesh::facesEnds() const
 {
-    return m_facesVertices;
-}
-
-const QVector<int> &Mesh::facesVerticesTexture() const
-{
-    return m_facesVerticesTexture;
-}
-
-const QVector<int> &Mesh::facesNormals() const
-{
-    return m_facesNormals;
+    return m_facesEnds;
 }
 
 const QVector<QString> &Mesh::groupsNames() const

@@ -1,3 +1,6 @@
+#include "ObjParser/objparser.h"
+#include "ObjParser/objparserinternal.h"
+
 #include <QString>
 #include <QStringList>
 #include <QStringView>
@@ -7,8 +10,6 @@
 #include <QDebug>
 
 #include "Newpson/Mesh/mesh.h"
-#include "ObjParser/objparser.h"
-#include "ObjParser/objparserinternal.h"
 
 namespace Newpson::ObjParser {
 
@@ -284,21 +285,21 @@ Status parseFaceVertexComponents(
     return status;
 }
 
-int indexMakeAbsolute(const int numComponents, const int index)
+int indexMakeAbsolute(const int index, const int numComponents)
 {
     return (index >= 0 ? index - 1 : numComponents + index);
 }
 
 Status appendIndex(const int index, QVector<int> &indices, const int numComponents)
 {
-    const int absIndex = indexMakeAbsolute(numComponents, index);
+    const int absIndex = indexMakeAbsolute(index, numComponents);
     if (absIndex < 0 || absIndex >= numComponents)
         return STATUS_ERROR_UNDEFINED_INDEX;
     indices.append(absIndex);
     return STATUS_OK;
 }
 
-Status parseFaceVertex(
+Status parseFaceTriad(
         QChar const * const lineEnd,
         QChar const *&lineIter,
         const int numVertices,
@@ -349,49 +350,54 @@ Status parseFace(
         const int numNormals,
         QChar const * const lineEnd,
         QChar const *&lineIter,
+        int &numParsedTriads,
         QVector<int> &indicesVertices,
         QVector<int> &indicesVerticesTexture,
         QVector<int> &indicesNormals)
 {
+    Status status = STATUS_OK;
+    numParsedTriads = 0;
+
     bool hasIndexVertexTexture = false;
     bool hasIndexNormal = false;
-    bool mustHaveIndexVertexTexture = false;
-    bool mustHaveIndexNormal = false;
-
-    Status status = STATUS_OK;
-
-    status = parseFaceVertex(
+    status = parseFaceTriad(
                 lineEnd, lineIter,
                 numVertices, numVerticesTexture, numNormals,
                 indicesVertices, indicesVerticesTexture, indicesNormals,
                 hasIndexVertexTexture, hasIndexNormal);
+    if (status != STATUS_OK)
+        return status;
+    ++numParsedTriads;
+
+    bool mustHaveIndexVertexTexture = false;
+    bool mustHaveIndexNormal = false;
     if (hasIndexVertexTexture)
         mustHaveIndexVertexTexture = true;
     if (hasIndexNormal)
         mustHaveIndexNormal = true;
 
-    int numParsedVertices = 1;
     while (lineIter != lineEnd) {
-        status = parseFaceVertex(
+        status = parseFaceTriad(
                     lineEnd, lineIter,
                     numVertices, numVerticesTexture, numNormals,
                     indicesVertices, indicesVerticesTexture, indicesNormals,
                     hasIndexVertexTexture, hasIndexNormal);
 
-        // FIXME add error code about number of arguments to avoid ambiguity
-        // for example:
-        // f 1/2/3 4/5/6/ 7/8/9 asdfasdfa
         if (status != STATUS_OK)
-            return numParsedVertices >= 3 ? STATUS_OK : status;
+            return status;
 
         if (mustHaveIndexVertexTexture != hasIndexVertexTexture
                 || mustHaveIndexNormal != hasIndexNormal)
             return STATUS_ERROR_COMPONENTS_INCOHERENCE;
 
-        ++numParsedVertices;
+        ++numParsedTriads;
+        skipWhiteSpace(lineEnd, lineIter);
     }
 
-    return status;
+    if (numParsedTriads < 3)
+        return STATUS_ERROR_EXPECTED_INTEGER;
+
+    return STATUS_OK;
 }
 
 Status parseGroupName(
@@ -417,7 +423,6 @@ QVector3D generateNormal(
         const int faceBegin,
         const int faceEnd)
 {
-    Q_ASSERT(vertices.length() >= 3);
     Q_ASSERT(faceBegin >= 0 && faceBegin <= indicesVertices.length());
     Q_ASSERT(faceEnd >= 0 && faceEnd <= indicesVertices.length());
 
@@ -437,7 +442,7 @@ QVector2D generateVerticesTexture()
     return QVector2D(0.0, 0.0);
 }
 
-} // namespace Internal
+}
 
 Mesh load(QTextStream &input, ParserResult &parserResult)
 {
@@ -450,8 +455,6 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
     QVector<int> indicesVerticesTexture;
     QVector<int> indicesNormals;
     QVector<int> facesEnds;
-    QVector<int> facesVerticesTexture;
-    QVector<int> facesNormals;
     QVector<QString> groupsNames = {"default"};
     QVector<int> groupsEnds;
 
@@ -518,17 +521,35 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
         }
 
         case LINETYPE_FACE: {
+            int numParsedTriads = 0;
             parserResult.status = parseFace(
                     vertices.length(), verticesTexture.length(), normals.length(),
-                    lineEnd, lineIter,
+                    lineEnd, lineIter, numParsedTriads,
                     indicesVertices, indicesVerticesTexture, indicesNormals);
             if (parserResult.status != STATUS_OK) {
                 parserResult.columnNumber = lineIter - line.begin();
                 return Mesh();
             }
 
-            facesEnds.append(indicesVertices.length());
+            bool hasVerticesTexture = (indicesVerticesTexture.length() == indicesVertices.length());
+            if (!hasVerticesTexture) {
+                verticesTexture.append(QVector2D(0.0, 0.0));
+                for (int i = 0; i < numParsedTriads; ++i)
+                    indicesVerticesTexture.append(verticesTexture.length() - 1);
+            }
 
+            bool hasNormals = (indicesNormals.length() == indicesVertices.length());
+            if (!hasNormals) {
+                QVector3D absNormal = generateNormal(vertices,
+                                                     indicesVertices,
+                                                     facesEnds.length() > 0 ? facesEnds.last() : 0,
+                                                     indicesVertices.length());
+                normals.append(absNormal);
+                for (int i = 0; i < numParsedTriads; ++i)
+                    indicesNormals.append(normals.length() - 1);
+            }
+
+            facesEnds.append(indicesVertices.length());
             break;
         }
 
@@ -566,8 +587,6 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
         indicesVerticesTexture,
         indicesNormals,
         facesEnds,
-        facesVerticesTexture,
-        facesNormals,
         groupsNames,
         groupsEnds);
 }
@@ -597,4 +616,4 @@ Mesh load(QString const &filename, ParserResult &parserResult)
     return load(input, parserResult);
 }
 
-} // namespace Newpson::Parser::OBJ
+}

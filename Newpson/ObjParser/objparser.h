@@ -50,6 +50,6 @@ Mesh load(QTextStream &input, ParserResult &parserResult);
 Mesh load(QTextStream &&input, ParserResult &parserResult);
 Mesh load(QString const &filename, ParserResult &parserResult);
 
-} // namespace Newpson::Parsing::obj
+}
 
 #endif // NEWPSON_OBJPARSER_PARSER_H

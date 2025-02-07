@@ -15,7 +15,7 @@ namespace Newpson::ObjParser::Test {
 
 NewpsonObjParserTest::NewpsonObjParserTest(QObject *parent):
     QObject(parent),
-    commonPart(
+    m_commonPart(
         "v   0  0  0 \n" \
         "v   0  0  1 \n" \
         "v   0  1  0 \n" \
@@ -32,6 +32,30 @@ NewpsonObjParserTest::NewpsonObjParserTest(QObject *parent):
         "vn -1  0  0 \n")
 {}
 
+void NewpsonObjParserTest::testIndexMakeAbsolute_data()
+{
+    QTest::addColumn<int>("index");
+    QTest::addColumn<int>("numComponents");
+    QTest::addColumn<int>("absIndex");
+    QTest::newRow("positive-inbounds") << 1 << 1 << 0;
+    QTest::newRow("negative-inbounds") << -1 << 1 << 0;
+    QTest::newRow("positive-inbounds-2") << 1 << 10 << 0;
+    QTest::newRow("negative-inbounds-2") << -1 << 10 << 9;
+    QTest::newRow("positive-outofbounds") << 2 << 1 << 1;
+    QTest::newRow("negative-outofbounds") << -2 << 1 << -1;
+    QTest::newRow("positive-outofbounds-2") << 2 << 10 << 1;
+    QTest::newRow("negative-outofbounds-2") << -2 << 10 << 8;
+}
+
+void NewpsonObjParserTest::testIndexMakeAbsolute()
+{
+    QFETCH(int, index);
+    QFETCH(int, numComponents);
+    QFETCH(int, absIndex);
+
+    QCOMPARE(Newpson::ObjParser::Internal::indexMakeAbsolute(index, numComponents), absIndex);
+}
+
 void NewpsonObjParserTest::testSkipWhiteSpace_data()
 {
     QTest::addColumn<QString>("input");
@@ -41,7 +65,6 @@ void NewpsonObjParserTest::testSkipWhiteSpace_data()
     QTest::newRow("spaces") << "\u0020\u0020\u0020\u0020\u0020\u0020\u0020" << "";
     QTest::newRow("tab") << "\u000B" << "";
     QTest::newRow("tabs") << "\u000B\u000B\u000B\u000B\u000B\u000B\u000B" << "";
-    QTest::newRow("spaces+tabs") << "\u000B\u0020\u000B\u000B\u0020\u000B\u000B\u000B\u000B\u0020" << "";
     QTest::newRow("spaces+tabs") << "\u000B\u0020\u000B\u000B\u0020\u000B\u000B\u000B\u000B\u0020" << "";
 
     QTest::newRow("content") << "a" << "a";
@@ -102,20 +125,23 @@ void NewpsonObjParserTest::testParseFloat()
     float parsedValue;
     QChar const *lineIter = input.begin();
     QChar const * const lineEnd = input.end();
-    parserResult.status = Newpson::ObjParser::Internal::parseFloat(lineEnd, lineIter, parsedValue);
-    qDebug() << parserResult.status;
-    QCOMPARE(parserResult.status, status);
+    m_parserResult.status = Newpson::ObjParser::Internal::parseFloat(lineEnd, lineIter, parsedValue);
+    QCOMPARE(m_parserResult.status, status);
 }
 
 void NewpsonObjParserTest::testNumArguments_data()
 {
     QTest::addColumn<QString>("input");
     QTest::addColumn<Newpson::ObjParser::Status>("status");
+    QTest::newRow("vertex-0") << "v" << STATUS_ERROR_EXPECTED_FLOAT;
     QTest::newRow("vertex-1") << "v 1" << STATUS_ERROR_EXPECTED_FLOAT;
     QTest::newRow("vertex-2") << "v 1 1" << STATUS_ERROR_EXPECTED_FLOAT;
+    QTest::newRow("vertexTexture-0") << "vt" << STATUS_ERROR_EXPECTED_FLOAT;
     QTest::newRow("vertexTexture-1") << "vt 1" << STATUS_ERROR_EXPECTED_FLOAT;
+    QTest::newRow("normal-0") << "vn" << STATUS_ERROR_EXPECTED_FLOAT;
     QTest::newRow("normal-1") << "vn 1" << STATUS_ERROR_EXPECTED_FLOAT;
     QTest::newRow("normal-2") << "vn 1 1" << STATUS_ERROR_EXPECTED_FLOAT;
+    QTest::newRow("face-0") << "v 1 1 1 \n f" << STATUS_ERROR_EXPECTED_INTEGER;
     QTest::newRow("face-1") << "v 1 1 1 \n f 1" << STATUS_ERROR_EXPECTED_INTEGER;
     QTest::newRow("face-2") << "v 1 1 1 \n f 1 1" << STATUS_ERROR_EXPECTED_INTEGER;
 
@@ -134,8 +160,8 @@ void NewpsonObjParserTest::testNumArguments()
     QFETCH(QString, input);
     QFETCH(Newpson::ObjParser::Status, status);
 
-    Newpson::ObjParser::load(QTextStream(&input), parserResult);
-    QCOMPARE(parserResult.status, status);
+    Newpson::ObjParser::load(QTextStream(&input), m_parserResult);
+    QCOMPARE(m_parserResult.status, status);
 }
 
 void NewpsonObjParserTest::testEmptyFile_data()
@@ -159,8 +185,8 @@ void NewpsonObjParserTest::testEmptyFile()
     QFETCH(QString, input);
     QFETCH(Newpson::ObjParser::Status, status);
 
-    Newpson::ObjParser::load(QTextStream(&input), parserResult);
-    QCOMPARE(parserResult.status, status);
+    Newpson::ObjParser::load(QTextStream(&input), m_parserResult);
+    QCOMPARE(m_parserResult.status, status);
 }
 
 void NewpsonObjParserTest::testComponentsCoherence_data()
@@ -238,10 +264,10 @@ void NewpsonObjParserTest::testComponentsCoherence()
     QFETCH(QString, face);
     QFETCH(Newpson::ObjParser::Status, status);
 
-    QString input = commonPart + face;
+    QString input = m_commonPart + face;
 
-    Newpson::ObjParser::load(QTextStream(&input), parserResult);
-    QCOMPARE(parserResult.status, status);
+    Newpson::ObjParser::load(QTextStream(&input), m_parserResult);
+    QCOMPARE(m_parserResult.status, status);
 }
 
 void NewpsonObjParserTest::testUndefinedIndex_data()
@@ -270,10 +296,10 @@ void NewpsonObjParserTest::testUndefinedIndex()
     QFETCH(QString, face);
     QFETCH(Newpson::ObjParser::Status, status);
 
-    QString input = commonPart + face;
+    QString input = m_commonPart + face;
 
-    Newpson::ObjParser::load(QTextStream(&input), parserResult);
-    QCOMPARE(parserResult.status, status);
+    Newpson::ObjParser::load(QTextStream(&input), m_parserResult);
+    QCOMPARE(m_parserResult.status, status);
 }
 
 void NewpsonObjParserTest::testParsedData()
@@ -315,13 +341,13 @@ void NewpsonObjParserTest::testParsedData()
         "usemtl Material \n" \
         "f 1/1/1 5/2/1 7/3/1 3/4/1 \n" \
         "f 4/5/2 3/4/2 7/6/2 8/7/2 \n" \
-        "f 8//3 7//3 5//3 6//3 \n" \
+        "f 8//3 7//3 5//3 6//3 \n" /* texture coords will be generated */ \
         "f 6/12/4 2/13/4 4/5/4 8/14/4 \n" \
-        "f 2/13 1/1 3/4 4/5 \n" \
-        "f 6 5 1 2 \n");
+        "f 2/13 1/1 3/4 4/5 \n" /* normals will be generated */ \
+        "f 6 5 1 2 \n"); /* normals and texture coords will be generated */
 
-    const Newpson::Mesh mesh = Newpson::ObjParser::load(QTextStream(&input), parserResult);
-    QCOMPARE(parserResult.status, STATUS_OK);
+    const Newpson::Mesh mesh = Newpson::ObjParser::load(QTextStream(&input), m_parserResult);
+    QCOMPARE(m_parserResult.status, STATUS_OK);
     QCOMPARE(mesh.checkConsistency(), Mesh::VALIDATION_OK);
 
     const QVector<QVector3D> &vertices = mesh.vertices();
@@ -336,7 +362,7 @@ void NewpsonObjParserTest::testParsedData()
     QCOMPARE(vertices[7], QVector3D(-1.000000, -1.000000,  1.000000));
 
     const QVector<QVector2D> &verticesTexture = mesh.verticesTexture();
-    QCOMPARE(verticesTexture.length(), 14);
+    QCOMPARE(verticesTexture.length(), 14 + 2); // two generated texture coords; manually discarded ones remain unused.
     QCOMPARE(verticesTexture[ 0], QVector2D(0.625000, 0.500000));
     QCOMPARE(verticesTexture[ 1], QVector2D(0.875000, 0.500000));
     QCOMPARE(verticesTexture[ 2], QVector2D(0.875000, 0.750000));
@@ -353,7 +379,7 @@ void NewpsonObjParserTest::testParsedData()
     QCOMPARE(verticesTexture[13], QVector2D(0.125000, 0.750000));
 
     const QVector<QVector3D> &normals = mesh.normals();
-    QCOMPARE(normals.length(), 6);
+    QCOMPARE(normals.length(), 6 + 2); // two generated normals; manually discarded ones remain unused.
     QCOMPARE(normals[0], QVector3D(-0.0000,  1.0000, -0.0000));
     QCOMPARE(normals[1], QVector3D(-0.0000, -0.0000,  1.0000));
     QCOMPARE(normals[2], QVector3D(-1.0000, -0.0000, -0.0000));
@@ -364,16 +390,35 @@ void NewpsonObjParserTest::testParsedData()
     const QVector<int> &indicesVertices = mesh.indicesVertices();
     const QVector<int> &indicesVerticesTexture = mesh.indicesVerticesTexture();
     const QVector<int> &indicesNormals = mesh.indicesNormals();
-    QCOMPARE(indicesVertices, QVector<int>({0, 4, 6, 2, 3, 2, 6, 7, 7, 6, 4, 5, 5, 1, 3, 7, 1, 0, 2, 3, 5, 4, 0, 1}));
-    QCOMPARE(indicesVerticesTexture, QVector<int>({0, 1, 2, 3, 4, 3, 5, 6, 11, 12, 4, 13, 12, 0, 3, 4}));
-    QCOMPARE(indicesNormals, QVector<int>({0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3}));
+    QCOMPARE(indicesVertices, QVector<int>({
+            0, 4, 6, 2,
+            3, 2, 6, 7,
+            7, 6, 4, 5,
+            5, 1, 3, 7,
+            1, 0, 2, 3,
+            5, 4, 0, 1
+    }));
 
-    const QVector<int> &facesVertices = mesh.facesVertices();
-    const QVector<int> &facesVerticesTexture = mesh.facesVerticesTexture();
-    const QVector<int> &facesNormals = mesh.facesNormals();
+    QCOMPARE(indicesVerticesTexture, QVector<int>({
+            0, 1, 2, 3,
+            4, 3, 5, 6,
+            14, 14, 14, 14, // generated
+            11, 12, 4, 13,
+            12, 0, 3, 4,
+            15, 15, 15, 15 // generated
+    }));
+
+    QCOMPARE(indicesNormals, QVector<int>({
+            0, 0, 0, 0,
+            1, 1, 1, 1,
+            2, 2, 2, 2,
+            3, 3, 3, 3,
+            6, 6, 6, 6, // generated
+            7, 7, 7, 7 // generated
+    }));
+
+    const QVector<int> &facesVertices = mesh.facesEnds();
     QCOMPARE(facesVertices, QVector<int>({4, 8, 12, 16, 20, 24}));
-    QCOMPARE(facesVerticesTexture, QVector<int>({4, 8, 8, 12, 16, 16}));
-    QCOMPARE(facesNormals, QVector<int>({4, 8, 12, 16, 16, 16}));
 }
 
-} // namespace Newpson::ObjParser::Test
+}

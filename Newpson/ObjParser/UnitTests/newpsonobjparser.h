@@ -12,20 +12,17 @@ Q_DECLARE_METATYPE(Newpson::Mesh::ValidationResult)
 
 namespace Newpson::ObjParser::Test {
 
-//! REVIEW: добавить постфикс Test
-//! REVIEW: длинное имя файла
 class NewpsonObjParserTest: public QObject
 {
     Q_OBJECT
-
-    //! REVIEW: private, move down
-    Newpson::ObjParser::ParserResult parserResult;
-    QString commonPart;
 
 public:
     NewpsonObjParserTest(QObject *parent = nullptr);
 
 private slots:
+    void testIndexMakeAbsolute_data();
+    void testIndexMakeAbsolute();
+
     void testSkipWhiteSpace_data();
     void testSkipWhiteSpace();
 
@@ -46,8 +43,11 @@ private slots:
 
     void testParsedData();
 
+private:
+    Newpson::ObjParser::ParserResult m_parserResult;
+    QString m_commonPart;
 };
 
-} // namespace Newpson::Parsing::Obj::Test
+}
 
 #endif // NEWPSON_OBJPARSER_PARSER_TEST_H
