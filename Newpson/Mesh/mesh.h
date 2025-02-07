@@ -24,7 +24,7 @@ namespace Newpson {
 class Mesh
 {
 public:
-    enum Status {
+    enum ValidationResult {
         VALIDATION_OK,
 
         VALIDATION_ERROR,
@@ -42,7 +42,7 @@ public:
         VALIDATION_ERROR_END,
     };
 
-    Mesh();
+    Mesh() = default;
 
     Mesh(
         const QVector<QVector3D> &vertices,
@@ -66,7 +66,6 @@ public:
         const QVector<int> &facesVerticesTexture,
         const QVector<int> &facesNormals,
         const QVector<QString> &groupsNames,
-        const QVector<int> &groupsBegins,
         const QVector<int> &groupsEnds);
 
     const QVector<QVector3D> &vertices() const;
@@ -79,10 +78,9 @@ public:
     const QVector<int> &facesVerticesTexture() const;
     const QVector<int> &facesNormals() const;
     const QVector<QString> &groupsNames() const;
-    const QVector<int> &groupsBegins() const;
     const QVector<int> &groupsEnds() const;
 
-    Mesh::Status areLengthsOfFacesIndicesVecotorsEqualAndIndicesVerticesVectorIsValidAndIndicesVerticesTextureVectorIsValidAndIndicesNormalsVectorIsValidAndFaceVerticesIndicesValidAndFaceVerticesTextureInidicesValidAndEtc() const;
+    ValidationResult checkConsistency() const;
 
 private:
     QVector<QVector3D> m_vertices;
@@ -94,9 +92,8 @@ private:
     QVector<int> m_facesVertices;
     QVector<int> m_facesVerticesTexture;
     QVector<int> m_facesNormals;
-    QVector<QString> m_groupsNames;
-    QVector<int> m_groupsBegins;
-    QVector<int> m_groupsEnds;
+    QVector<QString> m_groupsNames = {"default"};
+    QVector<int> m_groupsEnds = {0};
 };
 
 }

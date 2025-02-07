@@ -1,5 +1,5 @@
-#ifndef NEWPSON_PARSING_OBJ_PARSER_H
-#define NEWPSON_PARSING_OBJ_PARSER_H
+#ifndef NEWPSON_OBJPARSER_PARSER_H
+#define NEWPSON_OBJPARSER_PARSER_H
 
 #include "Newpson/Mesh/mesh.h"
 
@@ -10,7 +10,7 @@
 #include <QVector2D>
 #include <QVector3D>
 
-namespace Newpson::Parsing::Obj {
+namespace Newpson::ObjParser {
 
 enum Status {
     STATUS_VERBOSE,
@@ -52,4 +52,4 @@ Mesh load(QString const &filename, ParserResult &parserResult);
 
 } // namespace Newpson::Parsing::obj
 
-#endif // NEWPSON_PARSING_OBJ_PARSER_H
+#endif // NEWPSON_OBJPARSER_PARSER_H

@@ -4,12 +4,6 @@
 
 namespace Newpson  {
 
-Mesh::Mesh():
-    m_groupsBegins({0}),
-    m_groupsEnds({1}),
-    m_groupsNames({"default"})
-{}
-
 Mesh::Mesh(
     const QVector<QVector3D> &vertices,
     const QVector<QVector2D> &verticesTexture,
@@ -30,9 +24,7 @@ Mesh::Mesh(
     m_facesVertices(facesVertices),
     m_facesVerticesTexture(facesVerticesTexture),
     m_facesNormals(facesNormals),
-    m_groupsBegins({0}),
-    m_groupsEnds({1}),
-    m_groupsNames({"default"})
+    m_groupsEnds({facesVertices.length()})
 {}
 
 Mesh::Mesh(
@@ -46,7 +38,6 @@ Mesh::Mesh(
     const QVector<int> &facesVerticesTexture,
     const QVector<int> &facesNormals,
     const QVector<QString> &groupsNames,
-    const QVector<int> &groupsBegins,
     const QVector<int> &groupsEnds):
 
     m_vertices(vertices),
@@ -59,7 +50,6 @@ Mesh::Mesh(
     m_facesVerticesTexture(facesVerticesTexture),
     m_facesNormals(facesNormals),
     m_groupsNames(groupsNames),
-    m_groupsBegins(groupsBegins),
     m_groupsEnds(groupsEnds)
 {}
 
@@ -77,36 +67,16 @@ bool areFaceIndicesValid(const QVector<int> &indices, const int maxIndex)
 {
     int lastIndex = -1;
     for (int index : indices) {
-        const bool outOfBounds = index < 0 || index > maxIndex;
-        const bool missordered = index < lastIndex;
-        if (outOfBounds || missordered)
+        const bool isOutOfBounds = index < 0 || index > maxIndex;
+        const bool isMissordered = index < lastIndex;
+        if (isOutOfBounds || isMissordered)
             return false;
         lastIndex = index;
     }
     return true;
 }
 
-bool areGroupsIndicesValid(const QVector<int> &groupsBegins, const QVector<int> &groupsEnds)
-{
-    Q_ASSERT(groupsBegins.length() == groupsEnds.length());
-    int lastBeginIndex = -1;
-    int lastEndIndex = -1;
-    for (auto beginsIter = groupsBegins.begin(), endsIter = groupsEnds.begin();
-         beginsIter != groupsBegins.end() && endsIter != groupsEnds.end();
-         ++beginsIter, ++endsIter) {
-        const bool invalidBounds = (*beginsIter > *endsIter);
-        const bool missordered = ((*beginsIter < lastBeginIndex) || (*endsIter < lastEndIndex));
-        if (invalidBounds || missordered)
-            return false;
-        lastBeginIndex = *beginsIter;
-        lastEndIndex = *endsIter;
-    }
-
-    return true;
-}
-
-
-Mesh::Status Mesh::areLengthsOfFacesIndicesVecotorsEqualAndIndicesVerticesVectorIsValidAndIndicesVerticesTextureVectorIsValidAndIndicesNormalsVectorIsValidAndFaceVerticesIndicesValidAndFaceVerticesTextureInidicesValidAndEtc() const
+Mesh::ValidationResult Mesh::checkConsistency() const
 {
     bool areFacesCoherent = (m_facesVertices.length() == m_facesVerticesTexture.length()
                              && m_facesVertices.length() == m_facesNormals.length());
@@ -132,15 +102,15 @@ Mesh::Status Mesh::areLengthsOfFacesIndicesVecotorsEqualAndIndicesVerticesVector
     if (!areFaceIndicesValid(m_facesNormals, m_indicesNormals.length()))
         return VALIDATION_ERROR_INVALID_FACES_NORMALS;
 
-    const bool hasNoGroups = m_groupsBegins.isEmpty() || m_groupsEnds.isEmpty() || m_groupsNames.isEmpty();
+    const bool hasNoGroups = m_groupsEnds.isEmpty() || m_groupsNames.isEmpty();
     if (hasNoGroups)
         return VALIDATION_ERROR_NO_GROUPS;
 
-    const bool hasNoDefaultGroup = m_groupsBegins[0] != 0 || m_groupsNames[0] != "default";
+    const bool hasNoDefaultGroup = m_groupsNames[0] != "default";
     if (hasNoDefaultGroup)
         return VALIDATION_ERROR_NO_GROUP_DEFAULT;
 
-    if (!areGroupsIndicesValid(m_groupsBegins, m_groupsEnds))
+    if (!areFaceIndicesValid(m_groupsEnds, m_facesVertices.length()))
         return VALIDATION_ERROR_INVALID_INDICES_GROUPS;
 
     return VALIDATION_OK;
@@ -196,14 +166,9 @@ const QVector<QString> &Mesh::groupsNames() const
     return m_groupsNames;
 }
 
-const QVector<int> &Mesh::groupsBegins() const
-{
-    return m_groupsBegins;
-}
-
 const QVector<int> &Mesh::groupsEnds() const
 {
     return m_groupsEnds;
 }
 
-} // namespace Newpson
+}
