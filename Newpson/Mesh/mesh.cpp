@@ -99,49 +99,52 @@ Mesh::ValidationResult Mesh::checkConsistency() const
     return VALIDATION_OK;
 }
 
-//Mesh Mesh::triangulate() const
-//{
-//    QVector<int> indicesVertices;
-//    QVector<int> indicesVerticesTexture;
-//    QVector<int> indicesNormals;
-//    QVector<int> facesEnds;
-//    QVector<int> facesEndsTexture;
-//    QVector<int> facesNormals;
-//    QVector<int> groupsEnds;
+Mesh Mesh::triangulate() const
+{
+    QVector<int> indicesVertices;
+    QVector<int> indicesVerticesTexture;
+    QVector<int> indicesNormals;
+    QVector<int> facesEnds;
+    QVector<int> groupsEnds;
 
-//    int groupBegin = 0;
-//    int faceBegin = 0;
-//    for (int groupEnd : m_groupsEnds)
-//    {
-//        qDebug() << "{";
-//        int faceEnd = -1;
-//        for (int i = groupBegin; i < groupEnd; ++i) {
-//            qDebug() << i << "has normals:" << faceHasComponent(m_facesEnds, i);
-////            faceEnd = m_facesEnds[i];
-////            qDebug() << "  {";
-////            for (int j = faceBegin; j < faceEnd; ++j) {
-////                    qDebug() << "    " << m_indicesVertices[j];
-////            }
-////            qDebug() << "  }";
-////            faceBegin = faceEnd;
-//        }
-//        qDebug() << "}";
-//        groupBegin = groupEnd;
-//    }
+    int groupBegin = 0;
+    int faceBegin = 0;
+    for (int groupEnd : m_groupsEnds) {
+        // qDebug() << "Group from" << groupBegin << "to" << groupEnd;
+        for (int i = groupBegin; i < groupEnd; ++i) {
+            int faceEnd = m_facesEnds[i];
+            // qDebug() << "  Face from" << faceBegin << "to" << faceEnd;
+            for (int j = faceBegin + 1; j < faceEnd - 1; ++j) {
+                indicesVertices.append(m_indicesVertices[faceBegin]);
+                indicesVertices.append(m_indicesVertices[j]);
+                indicesVertices.append(m_indicesVertices[j + 1]);
 
-//    return Mesh();
-////    return Mesh(m_vertices,
-////                m_verticesTexture,
-////                m_normals,
-////                indicesVertices,
-////                indicesVerticesTexture,
-////                indicesNormals,
-////                facesEnds,
-////                facesEndsTexture,
-////                facesNormals,
-////                m_groupsNames,
-////                groupsEnds);
-//}
+                indicesVerticesTexture.append(m_indicesVerticesTexture[faceBegin]);
+                indicesVerticesTexture.append(m_indicesVerticesTexture[j]);
+                indicesVerticesTexture.append(m_indicesVerticesTexture[j + 1]);
+
+                indicesNormals.append(m_indicesNormals[faceBegin]);
+                indicesNormals.append(m_indicesNormals[j]);
+                indicesNormals.append(m_indicesNormals[j + 1]);
+                // qDebug() << "    Vertex index" << m_indicesVertices[j];
+                facesEnds.append(indicesVertices.length());
+            }
+            faceBegin = faceEnd;
+        }
+        groupBegin = groupEnd;
+        groupsEnds.append(facesEnds.length());
+    }
+
+    return Mesh(m_vertices,
+                m_verticesTexture,
+                m_normals,
+                indicesVertices,
+                indicesVerticesTexture,
+                indicesNormals,
+                facesEnds,
+                m_groupsNames,
+                groupsEnds);
+}
 
 const QVector<QVector3D> &Mesh::vertices() const
 {

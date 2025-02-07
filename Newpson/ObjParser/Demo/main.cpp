@@ -46,6 +46,26 @@ int main()
     qDebug() << "facesEnds:" << mesh.facesEnds();
     qDebug() << "groupsNames:" << mesh.groupsNames();
     qDebug() << "groupsEnds:" << mesh.groupsEnds();
+    qDebug() << "";
 
+    qDebug() << "[Triangulation]";
+    Newpson::Mesh triMesh = mesh.triangulate();
+    qDebug() << "[Stats]";
+    qDebug() << "Number of vertices:" << triMesh.vertices().length();
+    qDebug() << "Number of texture vertices:" << triMesh.verticesTexture().length();
+    qDebug() << "Number of normals:" << triMesh.normals().length();
+    qDebug() << "Number of faces:" << triMesh.facesEnds().length();
+    qDebug() << "Number of groups:" << triMesh.groupsEnds().length();
+    qDebug() << "";
+    qDebug() << "[Overall mesh data]";
+    qDebug() << "vertices:" << triMesh.vertices();
+    qDebug() << "verticesTexture:" << triMesh.verticesTexture();
+    qDebug() << "normals:" << triMesh.normals();
+    qDebug() << "indicesVertices:" << triMesh.indicesVertices();
+    qDebug() << "indicesVerticesTexture:" << triMesh.indicesVerticesTexture();
+    qDebug() << "indicesNormals:" << triMesh.indicesNormals();
+    qDebug() << "facesEnds:" << triMesh.facesEnds();
+    qDebug() << "groupsNames:" << triMesh.groupsNames();
+    qDebug() << "groupsEnds:" << triMesh.groupsEnds();
     return 0;
 }
