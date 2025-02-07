@@ -1,5 +1,5 @@
-#ifndef NEWPSON_PARSING_OBJ_PARSER_TEST_H
-#define NEWPSON_PARSING_OBJ_PARSER_TEST_H
+#ifndef NEWPSON_OBJPARSER_PARSER_TEST_H
+#define NEWPSON_OBJPARSER_PARSER_TEST_H
 
 #include <QObject>
 #include <QString>
@@ -7,23 +7,23 @@
 #include "Newpson/Mesh/mesh.h"
 #include "ObjParser/objparser.h"
 
-Q_DECLARE_METATYPE(Newpson::Parsing::Obj::Status)
-Q_DECLARE_METATYPE(Newpson::Mesh::Status)
+Q_DECLARE_METATYPE(Newpson::ObjParser::Status)
+Q_DECLARE_METATYPE(Newpson::Mesh::ValidationResult)
 
-namespace Newpson::Parsing::Obj::Test {
+namespace Newpson::ObjParser::Test {
 
 //! REVIEW: добавить постфикс Test
 //! REVIEW: длинное имя файла
-class Parser: public QObject
+class NewpsonObjParserTest: public QObject
 {
     Q_OBJECT
 
     //! REVIEW: private, move down
-    Newpson::Parsing::Obj::ParserResult parserResult;
+    Newpson::ObjParser::ParserResult parserResult;
     QString commonPart;
 
 public:
-    Parser(QObject *parent = nullptr);
+    NewpsonObjParserTest(QObject *parent = nullptr);
 
 private slots:
     void testSkipWhiteSpace_data();
@@ -50,4 +50,4 @@ private slots:
 
 } // namespace Newpson::Parsing::Obj::Test
 
-#endif // NEWPSON_PARSING_OBJ_PARSER_TEST_H
+#endif // NEWPSON_OBJPARSER_PARSER_TEST_H

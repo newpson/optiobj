@@ -116,6 +116,61 @@ Mesh::ValidationResult Mesh::checkConsistency() const
     return VALIDATION_OK;
 }
 
+//bool faceHasComponent(QVector<int> facesEnds, int index)
+//{
+//    if (facesEnds.isEmpty())
+//        return false;
+
+//    if (index == 0)
+//        return (facesEnds[0] != 0);
+
+//    return (facesEnds[index] - facesEnds[index-1]) > 0;
+//}
+
+//Mesh Mesh::triangulate() const
+//{
+//    QVector<int> indicesVertices;
+//    QVector<int> indicesVerticesTexture;
+//    QVector<int> indicesNormals;
+//    QVector<int> facesVertices;
+//    QVector<int> facesVerticesTexture;
+//    QVector<int> facesNormals;
+//    QVector<int> groupsEnds;
+
+//    int groupBegin = 0;
+//    int faceBegin = 0;
+//    for (int groupEnd : m_groupsEnds)
+//    {
+//        qDebug() << "{";
+//        int faceEnd = -1;
+//        for (int i = groupBegin; i < groupEnd; ++i) {
+//            qDebug() << i << "has normals:" << faceHasComponent(m_facesVertices, i);
+////            faceEnd = m_facesVertices[i];
+////            qDebug() << "  {";
+////            for (int j = faceBegin; j < faceEnd; ++j) {
+////                    qDebug() << "    " << m_indicesVertices[j];
+////            }
+////            qDebug() << "  }";
+////            faceBegin = faceEnd;
+//        }
+//        qDebug() << "}";
+//        groupBegin = groupEnd;
+//    }
+
+//    return Mesh();
+////    return Mesh(m_vertices,
+////                m_verticesTexture,
+////                m_normals,
+////                indicesVertices,
+////                indicesVerticesTexture,
+////                indicesNormals,
+////                facesVertices,
+////                facesVerticesTexture,
+////                facesNormals,
+////                m_groupsNames,
+////                groupsEnds);
+//}
+
 const QVector<QVector3D> &Mesh::vertices() const
 {
     return m_vertices;

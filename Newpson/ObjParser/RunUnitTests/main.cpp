@@ -3,6 +3,6 @@
 
 int main()
 {
-    Newpson::Parsing::Obj::Test::Parser test;
+    Newpson::ObjParser::Test::NewpsonObjParserTest test;
 	QTest::qExec(&test);
 }

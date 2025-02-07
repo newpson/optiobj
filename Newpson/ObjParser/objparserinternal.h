@@ -53,6 +53,14 @@ Status parseFaceVertexComponents(
         int &indexNormal);
 Status parseGroupsNames(QChar const * const lineEnd, QChar const *&lineIter, QVector<QString> &groupsNames);
 
+QVector3D generateNormal(
+        const QVector<QVector3D> &vertices,
+        const QVector<int> &indicesVertices,
+        const int faceBegin,
+        const int faceEnd);
+QVector2D generateVerticesTexture();
+
+
 } // namespace Newpson::Parsing::Obj::Internal
 
 #endif // NEWPSON_OBJPARSER_OBJPARSERINTERNAL_H

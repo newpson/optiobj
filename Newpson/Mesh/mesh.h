@@ -7,20 +7,6 @@
 
 namespace Newpson {
 
-//namespace MeshUtilites {
-
-//isValid();
-
-//namespace Internal {
-
-//areIndicesValid()
-//areFaceIndicesValid()
-//areGroupsIndicesValid()
-
-//}
-
-//}
-
 class Mesh
 {
 public:
@@ -81,6 +67,7 @@ public:
     const QVector<int> &groupsEnds() const;
 
     ValidationResult checkConsistency() const;
+    Mesh triangulate() const;
 
 private:
     QVector<QVector3D> m_vertices;

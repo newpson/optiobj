@@ -284,6 +284,63 @@ Status parseFaceVertexComponents(
     return status;
 }
 
+int indexMakeAbsolute(const int numComponents, const int index)
+{
+    return (index >= 0 ? index - 1 : numComponents + index);
+}
+
+Status appendIndex(const int index, QVector<int> &indices, const int numComponents)
+{
+    const int absIndex = indexMakeAbsolute(numComponents, index);
+    if (absIndex < 0 || absIndex >= numComponents)
+        return STATUS_ERROR_UNDEFINED_INDEX;
+    indices.append(absIndex);
+    return STATUS_OK;
+}
+
+Status parseFaceVertex(
+        QChar const * const lineEnd,
+        QChar const *&lineIter,
+        const int numVertices,
+        const int numVerticesTexture,
+        const int numNormals,
+        QVector<int> &indicesVertices,
+        QVector<int> &indicesVerticesTexture,
+        QVector<int> &indicesNormals,
+        bool &hasIndexVertexTexture,
+        bool &hasIndexNormal)
+{
+    Status status = STATUS_OK;
+
+    int indexVertex = 0;
+    int indexVertexTexture = 0;
+    int indexNormal = 0;
+    status = parseFaceVertexComponents(
+                lineEnd, lineIter,
+                indexVertex,
+                hasIndexVertexTexture, indexVertexTexture,
+                hasIndexNormal, indexNormal);
+    if (status != STATUS_OK)
+        return status;
+
+    status = appendIndex(indexVertex, indicesVertices, numVertices);
+    if (status != STATUS_OK)
+        return status;
+
+    if (hasIndexVertexTexture) {
+        status = appendIndex(indexVertexTexture, indicesVerticesTexture, numVerticesTexture);
+        if (status != STATUS_OK)
+            return status;
+    }
+
+    if (hasIndexNormal) {
+        status = appendIndex(indexNormal, indicesNormals, numNormals);
+        if (status != STATUS_OK)
+            return status;
+    }
+
+    return STATUS_OK;
+}
 
 
 Status parseFace(
@@ -292,98 +349,46 @@ Status parseFace(
         const int numNormals,
         QChar const * const lineEnd,
         QChar const *&lineIter,
-        QVector<int> &outFacesVertices,
-        QVector<int> &outFacesVerticesTexture,
-        QVector<int> &outFacesNormals)
+        QVector<int> &indicesVertices,
+        QVector<int> &indicesVerticesTexture,
+        QVector<int> &indicesNormals)
 {
-    int indexVertex = 0;
-    bool mustHaveIndexTexture = false;
-    bool hasIndexTexture = false;
-    int indexVertexTexture = 0;
-    bool mustHaveIndexNormal = false;
+    bool hasIndexVertexTexture = false;
     bool hasIndexNormal = false;
-    int indexNormal = 0;
+    bool mustHaveIndexVertexTexture = false;
+    bool mustHaveIndexNormal = false;
 
     Status status = STATUS_OK;
 
-    status = parseFaceVertexComponents(
+    status = parseFaceVertex(
                 lineEnd, lineIter,
-                indexVertex,
-                hasIndexTexture, indexVertexTexture,
-                hasIndexNormal, indexNormal);
-    if (status != STATUS_OK)
-        return status;
-    if (indexVertex == 0 || indexVertex > numVertices)
-        return STATUS_ERROR_UNDEFINED_INDEX;
-    outFacesVertices.append(indexVertex - 1);
-    if (hasIndexTexture) {
-        mustHaveIndexTexture = true;
-        if (indexVertexTexture == 0 || indexVertexTexture > numVerticesTexture)
-            return STATUS_ERROR_UNDEFINED_INDEX;
-        outFacesVerticesTexture.append(indexVertexTexture - 1);
-    }
-    if (hasIndexNormal) {
-        mustHaveIndexNormal= true;
-        if (indexNormal == 0 || indexNormal > numNormals)
-             return STATUS_ERROR_UNDEFINED_INDEX;
-        outFacesNormals.append(indexNormal - 1);
-    }
+                numVertices, numVerticesTexture, numNormals,
+                indicesVertices, indicesVerticesTexture, indicesNormals,
+                hasIndexVertexTexture, hasIndexNormal);
+    if (hasIndexVertexTexture)
+        mustHaveIndexVertexTexture = true;
+    if (hasIndexNormal)
+        mustHaveIndexNormal = true;
 
-    for (int i = 0; i < 2; ++i) {
-        status = parseFaceVertexComponents(
+    int numParsedVertices = 1;
+    while (lineIter != lineEnd) {
+        status = parseFaceVertex(
                     lineEnd, lineIter,
-                    indexVertex,
-                    hasIndexTexture, indexVertexTexture,
-                    hasIndexNormal, indexNormal);
+                    numVertices, numVerticesTexture, numNormals,
+                    indicesVertices, indicesVerticesTexture, indicesNormals,
+                    hasIndexVertexTexture, hasIndexNormal);
+
+        // FIXME add error code about number of arguments to avoid ambiguity
+        // for example:
+        // f 1/2/3 4/5/6/ 7/8/9 asdfasdfa
         if (status != STATUS_OK)
-            return status;
-        if (indexVertex == 0 || indexVertex > numVertices)
-            return STATUS_ERROR_UNDEFINED_INDEX;
-        outFacesVertices.append(indexVertex - 1);
-        if (mustHaveIndexTexture != hasIndexTexture
+            return numParsedVertices >= 3 ? STATUS_OK : status;
+
+        if (mustHaveIndexVertexTexture != hasIndexVertexTexture
                 || mustHaveIndexNormal != hasIndexNormal)
             return STATUS_ERROR_COMPONENTS_INCOHERENCE;
-        if (hasIndexTexture) {
-            if (indexVertexTexture == 0 || indexVertexTexture > numVerticesTexture)
-                return STATUS_ERROR_UNDEFINED_INDEX;
-            outFacesVerticesTexture.append(indexVertexTexture - 1);
-        }
-        if (hasIndexNormal) {
-            if (indexNormal == 0 || indexNormal > numNormals)
-                 return STATUS_ERROR_UNDEFINED_INDEX;
-            outFacesNormals.append(indexNormal - 1);
-        }
-    }
 
-    while (lineIter != lineEnd) {
-        skipWhiteSpace(lineEnd, lineIter);
-        if (lineIter == lineEnd)
-            return STATUS_OK;
-        status = parseFaceVertexComponents(
-                    lineEnd, lineIter,
-                    indexVertex,
-                    hasIndexTexture, indexVertexTexture,
-                    hasIndexNormal, indexNormal);
-       if (status != STATUS_OK)
-           return status;
-       if (indexVertex == 0 || indexVertex > numVertices)
-           return STATUS_ERROR_UNDEFINED_INDEX;
-       outFacesVertices.append(indexVertex - 1);
-
-       if (mustHaveIndexTexture != hasIndexTexture
-               || mustHaveIndexNormal != hasIndexNormal)
-           return STATUS_ERROR_COMPONENTS_INCOHERENCE;
-       if (hasIndexTexture) {
-           if (indexVertexTexture == 0 || indexVertexTexture > numVerticesTexture)
-               return STATUS_ERROR_UNDEFINED_INDEX;
-           outFacesVerticesTexture.append(indexVertexTexture - 1);
-       }
-
-       if (hasIndexNormal) {
-           if (indexNormal == 0 || indexNormal > numNormals)
-                return STATUS_ERROR_UNDEFINED_INDEX;
-           outFacesNormals.append(indexNormal - 1);
-       }
+        ++numParsedVertices;
     }
 
     return status;
@@ -406,6 +411,32 @@ Status parseGroupName(
     return STATUS_OK;
 }
 
+QVector3D generateNormal(
+        const QVector<QVector3D> &vertices,
+        const QVector<int> &indicesVertices,
+        const int faceBegin,
+        const int faceEnd)
+{
+    Q_ASSERT(vertices.length() >= 3);
+    Q_ASSERT(faceBegin >= 0 && faceBegin <= indicesVertices.length());
+    Q_ASSERT(faceEnd >= 0 && faceEnd <= indicesVertices.length());
+
+    const int numNormals = faceEnd - faceBegin - 2;
+    QVector3D sumNormals;
+    for (int vi = faceBegin + 1; vi < faceEnd-1; ++vi) {
+        const QVector3D v1(vertices[indicesVertices[vi]] - vertices[indicesVertices[faceBegin]]);
+        const QVector3D v2(vertices[indicesVertices[vi+1]] - vertices[indicesVertices[faceBegin]]);
+        sumNormals += QVector3D::normal(v1, v2);
+    }
+
+    return QVector3D(sumNormals.x()/numNormals, sumNormals.y()/numNormals, sumNormals.z()/numNormals);
+}
+
+QVector2D generateVerticesTexture()
+{
+    return QVector2D(0.0, 0.0);
+}
+
 } // namespace Internal
 
 Mesh load(QTextStream &input, ParserResult &parserResult)
@@ -418,11 +449,10 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
     QVector<int> indicesVertices;
     QVector<int> indicesVerticesTexture;
     QVector<int> indicesNormals;
-    QVector<int> facesVertices;
+    QVector<int> facesEnds;
     QVector<int> facesVerticesTexture;
     QVector<int> facesNormals;
     QVector<QString> groupsNames = {"default"};
-    QVector<int> groupsBegins = {0};
     QVector<int> groupsEnds;
 
     parserResult = ParserResult(STATUS_OK);
@@ -489,9 +519,7 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
 
         case LINETYPE_FACE: {
             parserResult.status = parseFace(
-                    vertices.length(),
-                    verticesTexture.length(),
-                    normals.length(),
+                    vertices.length(), verticesTexture.length(), normals.length(),
                     lineEnd, lineIter,
                     indicesVertices, indicesVerticesTexture, indicesNormals);
             if (parserResult.status != STATUS_OK) {
@@ -499,9 +527,7 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
                 return Mesh();
             }
 
-            facesVertices.append(indicesVertices.length());
-            facesVerticesTexture.append(indicesVerticesTexture.length());
-            facesNormals.append(indicesNormals.length());
+            facesEnds.append(indicesVertices.length());
 
             break;
         }
@@ -512,7 +538,7 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
                 parserResult.columnNumber = lineIter - line.begin();
                 return Mesh();
             }
-            groupsEnds.append(facesVertices.length());
+            groupsEnds.append(facesEnds.length());
             break;
         }
 
@@ -530,7 +556,7 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
         && normals.length() == 0)
         parserResult.status = STATUS_ERROR_INPUT_EMPTY;
 
-    groupsEnds.append(facesVertices.length());
+    groupsEnds.append(facesEnds.length());
 
     return Mesh(
         vertices,
@@ -539,7 +565,7 @@ Mesh load(QTextStream &input, ParserResult &parserResult)
         indicesVertices,
         indicesVerticesTexture,
         indicesNormals,
-        facesVertices,
+        facesEnds,
         facesVerticesTexture,
         facesNormals,
         groupsNames,

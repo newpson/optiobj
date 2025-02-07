@@ -1,5 +1,6 @@
 #include "Newpson/Mesh/mesh.h"
 #include "ObjParser/objparser.h"
+#include "ObjParser/objparserinternal.h"
 
 #include <QDebug>
 #include <QFile>
@@ -13,9 +14,9 @@ int main()
 {
     Newpson::ObjParser::ParserResult parserResult;
 
-    // Newpson::Mesh mesh = Newpson::Parsing::Obj::load(PROJECT_ASSETS "/ok/cube-semifull.obj", parserResult);
-     Newpson::Mesh mesh = Newpson::ObjParser::load(PROJECT_ASSETS "/ok/skull.obj", parserResult);
-//    Newpson::Mesh mesh = Newpson::Parsing::Obj::load(QTextStream(
+    Newpson::Mesh mesh = Newpson::ObjParser::load(PROJECT_ASSETS "/ok/cube.obj", parserResult);
+//     Newpson::Mesh mesh = Newpson::ObjParser::load(PROJECT_ASSETS "/ok/skull.obj", parserResult);
+//    Newpson::Mesh mesh = Newpson::ObjParser::load(QTextStream(
 //                                                        "v 1 1 1 \n"
 //                                                        "vt 1 1 1 \n"
 //                                                        "vn 1 1 1 \n"
@@ -30,27 +31,36 @@ int main()
     if (parserResult.status == Newpson::ObjParser::STATUS_OK) {
         if (mesh.checkConsistency() != Newpson::Mesh::VALIDATION_OK) {
             qDebug() << "Invalid mesh.";
-        } else {
-            qDebug() << "Mesh is valid.";
-            qDebug() << "[Parsing stats]";
-            qDebug() << "Number of geometric vertices:" << mesh.vertices().length();
-            qDebug() << "Number of texture vertices:" << mesh.verticesTexture().length();
-            qDebug() << "Number of normals:" << mesh.normals().length();
-            qDebug() << "Number of faces:" << mesh.facesVertices().length();
-
-    //        qDebug() << "[Overall mesh data]";
-    //        qDebug() << "geometry:" << mesh.vertices();
-    //        qDebug() << "textures:" << mesh.verticesTexture();
-    //        qDebug() << "normals:" << mesh.normals();
-    //        qDebug() << "indicesGeometry:" << mesh.indicesVertices();
-    //        qDebug() << "indicesTextures:" << mesh.indicesVerticesTexture();
-    //        qDebug() << "indicesNormals:" << mesh.indicesNormals();
-    //        qDebug() << "facesGeometry:" << mesh.facesVertices();
-    //        qDebug() << "facesTextures:" << mesh.facesVerticesTexture();
-    //        qDebug() << "facesNormals:" << mesh.facesNormals();
-            qDebug() << "groupsNames:" << mesh.groupsNames();
-            qDebug() << "groupsEnds:" << mesh.groupsEnds();
         }
+
+        qDebug() << "[Parsing stats]";
+        qDebug() << "Number of geometric vertices:" << mesh.vertices().length();
+        qDebug() << "Number of texture vertices:" << mesh.verticesTexture().length();
+        qDebug() << "Number of normals:" << mesh.normals().length();
+        qDebug() << "Number of faces:" << mesh.facesVertices().length();
+        qDebug() << "Number of groups:" << mesh.groupsEnds().length();
+
+        qDebug() << "[Overall mesh data]";
+        qDebug() << "geometry:" << mesh.vertices();
+        qDebug() << "textures:" << mesh.verticesTexture();
+        qDebug() << "normals:" << mesh.normals();
+        qDebug() << "indicesGeometry:" << mesh.indicesVertices();
+        qDebug() << "indicesTextures:" << mesh.indicesVerticesTexture();
+        qDebug() << "indicesNormals:" << mesh.indicesNormals();
+        qDebug() << "facesGeometry:" << mesh.facesVertices();
+        qDebug() << "facesTextures:" << mesh.facesVerticesTexture();
+        qDebug() << "facesNormals:" << mesh.facesNormals();
+        qDebug() << "groupsNames:" << mesh.groupsNames();
+        qDebug() << "groupsEnds:" << mesh.groupsEnds();
+
+//        qDebug() << "[Generating normals]";
+//        int faceBegin = 0;
+//        int faceEnd = 0;
+//        for (int i = 0; i < mesh.facesVertices().length(); ++i) {
+//            faceEnd = mesh.facesVertices()[i];
+//            qDebug() << Newpson::ObjParser::Internal::generateNormal(mesh.vertices(), mesh.indicesVertices(), faceBegin, faceEnd);
+//            faceBegin = faceEnd;
+//        }
     }
 
 

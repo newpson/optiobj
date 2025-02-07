@@ -11,9 +11,9 @@
 #include "ObjParser/objparser.h"
 #include "ObjParser/objparserinternal.h"
 
-namespace Newpson::Parsing::Obj::Test {
+namespace Newpson::ObjParser::Test {
 
-Parser::Parser(QObject *parent):
+NewpsonObjParserTest::NewpsonObjParserTest(QObject *parent):
     QObject(parent),
     commonPart(
         "v   0  0  0 \n" \
@@ -32,7 +32,7 @@ Parser::Parser(QObject *parent):
         "vn -1  0  0 \n")
 {}
 
-void Parser::testSkipWhiteSpace_data()
+void NewpsonObjParserTest::testSkipWhiteSpace_data()
 {
     QTest::addColumn<QString>("input");
     QTest::addColumn<QString>("remainder");
@@ -51,7 +51,7 @@ void Parser::testSkipWhiteSpace_data()
     QTest::newRow("content+spaces") << "a    " << "a    ";
 }
 
-void Parser::testSkipWhiteSpace()
+void NewpsonObjParserTest::testSkipWhiteSpace()
 {
     QFETCH(const QString, input);
     QFETCH(const QString, remainder);
@@ -59,16 +59,16 @@ void Parser::testSkipWhiteSpace()
     QString output;
     QChar const *lineIter = input.begin();
     QChar const * const lineEnd = input.end();
-    Newpson::Parsing::Obj::Internal::skipWhiteSpace(lineEnd, lineIter);
+    Newpson::ObjParser::Internal::skipWhiteSpace(lineEnd, lineIter);
     output.append(QStringView(lineIter, lineEnd));
 
     QCOMPARE(output, remainder);
 }
 
-void Parser::testParseFloat_data()
+void NewpsonObjParserTest::testParseFloat_data()
 {
     QTest::addColumn<QString>("input");
-    QTest::addColumn<Newpson::Parsing::Obj::Status>("status");
+    QTest::addColumn<Newpson::ObjParser::Status>("status");
     QTest::newRow("empty") << "" << STATUS_ERROR_EXPECTED_FLOAT;
     QTest::newRow("integer+trash-ascii") << "123abc" << STATUS_ERROR_EXPECTED_FLOAT;
     QTest::newRow("integer+trash-unicode") << "123\u1234\u1232\u0987" << STATUS_ERROR_EXPECTED_FLOAT;
@@ -94,23 +94,23 @@ void Parser::testParseFloat_data()
     QTest::newRow("wspaces-left+right") << "    123.0    " << STATUS_OK;
 }
 
-void Parser::testParseFloat()
+void NewpsonObjParserTest::testParseFloat()
 {
     QFETCH(const QString, input);
-    QFETCH(Newpson::Parsing::Obj::Status, status);
+    QFETCH(Newpson::ObjParser::Status, status);
 
     float parsedValue;
     QChar const *lineIter = input.begin();
     QChar const * const lineEnd = input.end();
-    parserResult.status = Newpson::Parsing::Obj::Internal::parseFloat(lineEnd, lineIter, parsedValue);
+    parserResult.status = Newpson::ObjParser::Internal::parseFloat(lineEnd, lineIter, parsedValue);
     qDebug() << parserResult.status;
     QCOMPARE(parserResult.status, status);
 }
 
-void Parser::testNumArguments_data()
+void NewpsonObjParserTest::testNumArguments_data()
 {
     QTest::addColumn<QString>("input");
-    QTest::addColumn<Newpson::Parsing::Obj::Status>("status");
+    QTest::addColumn<Newpson::ObjParser::Status>("status");
     QTest::newRow("vertex-1") << "v 1" << STATUS_ERROR_EXPECTED_FLOAT;
     QTest::newRow("vertex-2") << "v 1 1" << STATUS_ERROR_EXPECTED_FLOAT;
     QTest::newRow("vertexTexture-1") << "vt 1" << STATUS_ERROR_EXPECTED_FLOAT;
@@ -129,19 +129,19 @@ void Parser::testNumArguments_data()
     QTest::newRow("face-many") << "v 1 1 1 \n f 1 1 1 1 1 1 1" << STATUS_OK;
 }
 
-void Parser::testNumArguments()
+void NewpsonObjParserTest::testNumArguments()
 {
     QFETCH(QString, input);
-    QFETCH(Newpson::Parsing::Obj::Status, status);
+    QFETCH(Newpson::ObjParser::Status, status);
 
-    Newpson::Parsing::Obj::load(QTextStream(&input), parserResult);
+    Newpson::ObjParser::load(QTextStream(&input), parserResult);
     QCOMPARE(parserResult.status, status);
 }
 
-void Parser::testEmptyFile_data()
+void NewpsonObjParserTest::testEmptyFile_data()
 {
     QTest::addColumn<QString>("input");
-    QTest::addColumn<Newpson::Parsing::Obj::Status>("status");
+    QTest::addColumn<Newpson::ObjParser::Status>("status");
     QTest::newRow("empty") << "" << STATUS_ERROR_INPUT_EMPTY;
     QTest::newRow("space") << "\u0020" << STATUS_ERROR_INPUT_EMPTY;
     QTest::newRow("spaces") << "\u0020\u0020\u0020\u0020\u0020\u0020\u0020" << STATUS_ERROR_INPUT_EMPTY;
@@ -154,19 +154,19 @@ void Parser::testEmptyFile_data()
     QTest::newRow("trash-unicode") << "\u00e7\u008a\u00bd\u002d\u00dd\u00b7\u00ce\u0085\u007a\u00f2\u00b2\u00b0\u0097\u0057\u0072\u00f4\u0081\u0099\u00a2\u007d\u00cb" << STATUS_ERROR_INPUT_EMPTY;
 }
 
-void Parser::testEmptyFile()
+void NewpsonObjParserTest::testEmptyFile()
 {
     QFETCH(QString, input);
-    QFETCH(Newpson::Parsing::Obj::Status, status);
+    QFETCH(Newpson::ObjParser::Status, status);
 
-    Newpson::Parsing::Obj::load(QTextStream(&input), parserResult);
+    Newpson::ObjParser::load(QTextStream(&input), parserResult);
     QCOMPARE(parserResult.status, status);
 }
 
-void Parser::testComponentsCoherence_data()
+void NewpsonObjParserTest::testComponentsCoherence_data()
 {
     QTest::addColumn<QString>("face");
-    QTest::addColumn<Newpson::Parsing::Obj::Status>("status");
+    QTest::addColumn<Newpson::ObjParser::Status>("status");
     QTest::newRow("111 111 111") << "f 1/1/1 1/1/1 1/1/1" << STATUS_OK;
     QTest::newRow("111 111 110") << "f 1/1/1 1/1/1 1/1" << STATUS_ERROR_COMPONENTS_INCOHERENCE;
     QTest::newRow("111 111 101") << "f 1/1/1 1/1/1 1//1" << STATUS_ERROR_COMPONENTS_INCOHERENCE;
@@ -233,21 +233,21 @@ void Parser::testComponentsCoherence_data()
     QTest::newRow("100 100 100") << "f 1 1 1" << STATUS_OK;
 }
 
-void Parser::testComponentsCoherence()
+void NewpsonObjParserTest::testComponentsCoherence()
 {
     QFETCH(QString, face);
-    QFETCH(Newpson::Parsing::Obj::Status, status);
+    QFETCH(Newpson::ObjParser::Status, status);
 
     QString input = commonPart + face;
 
-    Newpson::Parsing::Obj::load(QTextStream(&input), parserResult);
+    Newpson::ObjParser::load(QTextStream(&input), parserResult);
     QCOMPARE(parserResult.status, status);
 }
 
-void Parser::testUndefinedIndex_data()
+void NewpsonObjParserTest::testUndefinedIndex_data()
 {
     QTest::addColumn<QString>("face");
-    QTest::addColumn<Newpson::Parsing::Obj::Status>("status");
+    QTest::addColumn<Newpson::ObjParser::Status>("status");
     QTest::newRow("vertices-defined") << "f 1 2 3 4" << STATUS_OK;
     QTest::newRow("vertex-undefined") << "f 5" << STATUS_ERROR_UNDEFINED_INDEX;
     QTest::newRow("vertices-undefined") << "f 5 6 7 8" << STATUS_ERROR_UNDEFINED_INDEX;
@@ -265,18 +265,18 @@ void Parser::testUndefinedIndex_data()
     QTest::newRow("normals-defined+undefined") << "f 1//1 2//1 3//1 4//7" << STATUS_ERROR_UNDEFINED_INDEX;
 }
 
-void Parser::testUndefinedIndex()
+void NewpsonObjParserTest::testUndefinedIndex()
 {
     QFETCH(QString, face);
-    QFETCH(Newpson::Parsing::Obj::Status, status);
+    QFETCH(Newpson::ObjParser::Status, status);
 
     QString input = commonPart + face;
 
-    Newpson::Parsing::Obj::load(QTextStream(&input), parserResult);
+    Newpson::ObjParser::load(QTextStream(&input), parserResult);
     QCOMPARE(parserResult.status, status);
 }
 
-void Parser::testParsedData()
+void NewpsonObjParserTest::testParsedData()
 {
     QString input(\
         "# Blender 4.3.1 \n" \
@@ -320,9 +320,9 @@ void Parser::testParsedData()
         "f 2/13 1/1 3/4 4/5 \n" \
         "f 6 5 1 2 \n");
 
-    const Newpson::Mesh mesh = Newpson::Parsing::Obj::load(QTextStream(&input), parserResult);
+    const Newpson::Mesh mesh = Newpson::ObjParser::load(QTextStream(&input), parserResult);
     QCOMPARE(parserResult.status, STATUS_OK);
-    QCOMPARE(mesh.areLengthsOfFacesIndicesVecotorsEqualAndIndicesVerticesVectorIsValidAndIndicesVerticesTextureVectorIsValidAndIndicesNormalsVectorIsValidAndFaceVerticesIndicesValidAndFaceVerticesTextureInidicesValidAndEtc(), Mesh::VALIDATION_OK);
+    QCOMPARE(mesh.checkConsistency(), Mesh::VALIDATION_OK);
 
     const QVector<QVector3D> &vertices = mesh.vertices();
     QCOMPARE(vertices.length(), 8);
@@ -376,4 +376,4 @@ void Parser::testParsedData()
     QCOMPARE(facesNormals, QVector<int>({4, 8, 12, 16, 16, 16}));
 }
 
-} // namespace Newpson::Parsing::Obj::Test
+} // namespace Newpson::ObjParser::Test
