@@ -1,7 +1,7 @@
 #ifndef NEWPSON_PARSING_OBJ_PARSER_INTERNAL_H
 #define NEWPSON_PARSING_OBJ_PARSER_INTERNAL_H
 
-#include "Obj/parser.h"
+#include "ObjParser/objparser.h"
 
 #include <QDebug>
 #include <QFile>

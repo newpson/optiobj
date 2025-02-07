@@ -1,13 +1,15 @@
+#include "UnitTests/newpsonobjparser.h"
+
 #include <QObject>
 #include <QString>
 #include <QTextStream>
 #include <QVector>
 #include <QVector2D>
 #include <QVector3D>
-#include "Newpson/mesh.h"
-#include "Obj/parser.h"
-#include "Obj/parser-internal.h"
-#include "UnitTests/parser.h"
+
+#include "Newpson/Mesh/mesh.h"
+#include "ObjParser/objparser.h"
+#include "ObjParser/objparserinternal.h"
 
 namespace Newpson::Parsing::Obj::Test {
 

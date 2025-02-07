@@ -1,5 +1,5 @@
-#include "Newpson/mesh.h"
-#include "Obj/parser.h"
+#include "Newpson/Mesh/mesh.h"
+#include "ObjParser/objparser.h"
 
 #include <QDebug>
 #include <QFile>
