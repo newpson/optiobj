@@ -1,5 +1,5 @@
 #include <QTest>
-#include "test/parser.h"
+#include "UnitTests/newpsonobjparser.h"
 
 int main()
 {

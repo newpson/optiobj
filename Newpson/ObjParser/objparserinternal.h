@@ -1,7 +1,7 @@
-#ifndef NEWPSON_PARSING_OBJ_PARSER_INTERNAL_H
-#define NEWPSON_PARSING_OBJ_PARSER_INTERNAL_H
+#ifndef NEWPSON_OBJPARSER_OBJPARSERINTERNAL_H
+#define NEWPSON_OBJPARSER_OBJPARSERINTERNAL_H
 
-#include "parser.h"
+#include "ObjParser/objparser.h"
 
 #include <QDebug>
 #include <QFile>
@@ -10,7 +10,7 @@
 #include <QVector2D>
 #include <QVector3D>
 
-namespace Newpson::Parsing::Obj::Internal {
+namespace Newpson::ObjParser::Internal {
 
 enum LineType {
     LINETYPE_EMPTY,
@@ -24,12 +24,10 @@ enum LineType {
 };
 
 bool isEndOrSpace(QChar const * const lineEnd, QChar const * const lineIter);
-bool hasMoreComponents(QChar const * const lineEnd, QChar const *&lineIter);
-bool skipWhiteSpace(QChar const * const lineEnd, QChar const *&lineIter);
-void skipUntilSlashOrSpace(QChar const * const lineEnd, QChar const *&lineIter);
 bool isNextCharEndOrSpace(QChar const * const lineEnd, QChar const *&lineIter);
-void fillRemainingGroupsEnds(const int numFaces, const int numActiveGroups, QVector<int> &groupsEnds);
-void switchActiveGroups(const int numFaces, const int numNextActiveGroups, QVector<int> &groupsBegins, QVector<int> &groupsEnds);
+bool hasMoreComponents(QChar const * const lineEnd, QChar const *&lineIter);
+void skipWhiteSpace(QChar const * const lineEnd, QChar const *&lineIter);
+void skipUntilSlashOrSpace(QChar const * const lineEnd, QChar const *&lineIter);
 
 LineType parseLineType(QChar const * const lineEnd, QChar const *&lineIter);
 Status parseFloat(QChar const * const lineEnd, QChar const *&lineIter, float &outFloat);
@@ -57,4 +55,4 @@ Status parseGroupsNames(QChar const * const lineEnd, QChar const *&lineIter, QVe
 
 } // namespace Newpson::Parsing::Obj::Internal
 
-#endif // NEWPSON_PARSING_OBJ_PARSER_INTERNAL_H
+#endif // NEWPSON_OBJPARSER_OBJPARSERINTERNAL_H

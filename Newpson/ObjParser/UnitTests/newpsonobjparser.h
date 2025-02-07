@@ -4,18 +4,21 @@
 #include <QObject>
 #include <QString>
 #include <QTest>
-#include "mesh.h"
-#include "obj/parser.h"
+#include "Newpson/Mesh/mesh.h"
+#include "ObjParser/objparser.h"
 
 Q_DECLARE_METATYPE(Newpson::Parsing::Obj::Status)
 Q_DECLARE_METATYPE(Newpson::Mesh::Status)
 
 namespace Newpson::Parsing::Obj::Test {
 
+//! REVIEW: добавить постфикс Test
+//! REVIEW: длинное имя файла
 class Parser: public QObject
 {
     Q_OBJECT
 
+    //! REVIEW: private, move down
     Newpson::Parsing::Obj::ParserResult parserResult;
     QString commonPart;
 
