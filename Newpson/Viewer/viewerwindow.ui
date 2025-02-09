@@ -26,7 +26,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
   </widget>
@@ -36,7 +36,7 @@
   <customwidget>
    <class>Newpson::Ui::GLWidget</class>
    <extends>QOpenGLWidget</extends>
-   <header>glwidget.h</header>
+   <header>Newpson/Viewer/newpsonviewerglwidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

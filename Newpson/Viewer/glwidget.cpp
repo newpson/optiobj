@@ -2,9 +2,9 @@
 #include <QSurfaceFormat>
 #include <QVector>
 #include <QVector3D>
-#include "obj/parser.h"
-#include "mesh.h"
-#include "glwidget.h"
+#include "Newpson/ObjParser/objparser.h"
+#include "Newpson/Mesh/mesh.h"
+#include "Newpson/Viewer/newpsonviewerglwidget.h"
 
 namespace Newpson::Ui {
 
@@ -17,30 +17,35 @@ GLWidget::GLWidget(QWidget *parent):
     fmt.setVersion(2, 0);
     fmt.setProfile(QSurfaceFormat::CoreProfile);
     setFormat(fmt);
-    Newpson::Parsing::Obj::ParserResult result;
-    m_mesh = Newpson::Parsing::Obj::load(PROJECT_ASSETS "/ok/suzanne.obj", result);
-    if (result.status != Newpson::Parsing::Obj::STATUS_OK)
-        qDebug() << "Loading mesh error:" << Newpson::Parsing::Obj::statusToString(result.status);
+    Newpson::ObjParser::ParserResult result;
+    m_mesh = Newpson::ObjParser::load("/home/newpson/temp/bugatti.obj", result);
+    if (result.status != Newpson::ObjParser::STATUS_OK)
+        qDebug() << "Loading mesh error:" << Newpson::ObjParser::statusToString(result.status);
 
-    const QVector<int> &facesVertices = m_mesh.facesVertices();
-    const QVector<int> &indicesVertices = m_mesh.indicesVertices();
-    const QVector<QVector3D> &vertices = m_mesh.vertices();
-    const QVector<int> &facesNormals = m_mesh.facesNormals();
-    const QVector<int> &indicesNormals = m_mesh.indicesNormals();
-    const QVector<QVector3D> &normals = m_mesh.normals();
+    Newpson::Mesh triMesh = m_mesh.triangulate();
+    const QVector<int> &facesEnds = triMesh.facesEnds();
+    const QVector<QVector3D> &vertices = triMesh.vertices();
+    const QVector<QVector3D> &normals = triMesh.normals();
+    const QVector<int> &indicesVertices = triMesh.indicesVertices();
+    const QVector<int> &indicesNormals = triMesh.indicesNormals();
 
-    for (int facei = 0, faceStarti = 0; facei < facesVertices.length(); ++facei) {
-        for (int index = faceStarti; index < facesVertices[facei]; ++index) {
-            // add triangulated face vertices to buffer
-            for (int coordi = 0; coordi < 3; ++coordi)
-                m_rawData.append(vertices[indicesVertices[index]][coordi]);
-            // and normals
-            for (int coordi = 0; coordi < 3; ++coordi) {
-                m_rawData.append(normals[indicesNormals[index]][coordi]);
-            }
+    m_rawData.reserve(facesEnds.length() * 6 * 3);
+    int faceBegin = 0;
+    for (int faceEnd : facesEnds) {
+        for (int i = faceBegin; i < faceEnd; ++i) {
+            m_rawData.append(vertices[indicesVertices[i]].x());
+            m_rawData.append(vertices[indicesVertices[i]].y());
+            m_rawData.append(vertices[indicesVertices[i]].z());
+            m_rawData.append(normals[indicesNormals[i]].x());
+            m_rawData.append(normals[indicesNormals[i]].y());
+            m_rawData.append(normals[indicesNormals[i]].z());
         }
+        faceBegin = faceEnd;
     }
-    // qDebug() << "Data:" << m_rawData;
+
+    qDebug() << "Buffer size:" << m_rawData.length() * sizeof(float) / 1024 / 1024 << "MB";
+    qDebug() << "Number of triangles:" << facesEnds.length();
+    qDebug() << "Done.";
 }
 
 
@@ -114,7 +119,7 @@ void GLWidget::initializeGL()
     m_objVbo.release();
 
     m_projection.setToIdentity();
-    m_view.lookAt(QVector3D(3, 0, 3), QVector3D(0, 0, 0), QVector3D(0, 1, 0));
+    m_view.lookAt(QVector3D(8, 4, 8), QVector3D(0, 0, 0), QVector3D(0, 1, 0));
 
     m_program.setUniformValue(m_viewLoc, m_view);
 
@@ -126,7 +131,7 @@ void GLWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
-    // glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
 
     m_program.bind();
 
@@ -136,7 +141,7 @@ void GLWidget::paintGL()
 void GLWidget::resizeGL(int width, int height)
 {
     m_projection.setToIdentity();
-    m_projection.perspective(45.0f, (float) width / height, 0.01f, 100.0f);
+    m_projection.perspective(45.0f, (float) width / height, 0.01f, 1000.0f);
     m_program.bind();
     m_program.setUniformValue(m_projectionLoc, m_projection);
 }

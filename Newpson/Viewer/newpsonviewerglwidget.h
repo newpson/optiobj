@@ -7,7 +7,7 @@
 #include <QOpenGLShaderProgram>
 #include <QOpenGLBuffer>
 #include <QVector>
-#include "mesh.h"
+#include "Newpson/Mesh/mesh.h"
 
 namespace Newpson::Ui {
 

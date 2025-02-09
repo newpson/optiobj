@@ -1,2 +1,2 @@
 TEMPLATE = subdirs
-SUBDIRS = Demo.pro UnitTests.pro
+SUBDIRS = App.pro Demo.pro UnitTests.pro
