@@ -1,5 +1,5 @@
-#ifndef NEWPSON_UI_GLWIDGET_H
-#define NEWPSON_UI_GLWIDGET_H
+#ifndef NEWPSON_VIEWER_GLWIDGET_H
+#define NEWPSON_VIEWER_GLWIDGET_H
 
 #include <QWidget>
 #include <QOpenGLWidget>
@@ -34,6 +34,6 @@ private:
     int m_viewLoc;
 };
 
-} // namespace Newpson::Ui
+}
 
 #endif

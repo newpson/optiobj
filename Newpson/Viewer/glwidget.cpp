@@ -2,9 +2,9 @@
 #include <QSurfaceFormat>
 #include <QVector>
 #include <QVector3D>
-#include "Newpson/ObjParser/objparser.h"
+#include "Newpson/Obj/Parser/parser.h"
 #include "Newpson/Mesh/mesh.h"
-#include "Newpson/Viewer/newpsonviewerglwidget.h"
+#include "Newpson/Viewer/glwidget.h"
 
 namespace Newpson::Ui {
 
@@ -18,7 +18,7 @@ GLWidget::GLWidget(QWidget *parent):
     fmt.setProfile(QSurfaceFormat::CoreProfile);
     setFormat(fmt);
     Newpson::ObjParser::ParserResult result;
-    m_mesh = Newpson::ObjParser::load("/home/newpson/temp/bugatti.obj", result);
+    m_mesh = Newpson::ObjParser::load(PROJECT_ASSETS "/ok/cow.obj", result);
     if (result.status != Newpson::ObjParser::STATUS_OK)
         qDebug() << "Loading mesh error:" << Newpson::ObjParser::statusToString(result.status);
 
@@ -146,4 +146,4 @@ void GLWidget::resizeGL(int width, int height)
     m_program.setUniformValue(m_projectionLoc, m_projection);
 }
 
-} // namespace Newpson::Ui
+}

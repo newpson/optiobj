@@ -1,5 +1,5 @@
-#include "ObjParser/objparser.h"
-#include "ObjParser/objparserinternal.h"
+#include "Newpson/Obj/Parser/parser.h"
+#include "Newpson/Obj/Parser/parser-internal.h"
 
 #include <QString>
 #include <QStringList>

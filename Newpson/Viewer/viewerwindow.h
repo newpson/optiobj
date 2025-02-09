@@ -1,9 +1,9 @@
-#ifndef NEWPSON_UI_VIEWERWINDOW_H
-#define NEWPSON_UI_VIEWERWINDOW_H
+#ifndef NEWPSON_VIEWER_VIEWERWINDOW_H
+#define NEWPSON_VIEWER_VIEWERWINDOW_H
 
 #include <QMainWindow>
 #include <QWidget>
-#include "ui_viewerwindow.h"
+#include "Newpson/Viewer/ui_viewerwindow.h"
 
 namespace Newpson::Ui {
 
@@ -14,6 +14,6 @@ public:
     ViewerWindow(QWidget *parent = nullptr);
 };
 
-} // namespace Newpson::Ui
+}
 
 #endif

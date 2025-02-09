@@ -1,0 +1,41 @@
+# see moc.prf for details;
+# so, the same thing is done with UIC.
+
+QMAKE_INTERNAL_INCLUDED_FEATURES += $$[QT_HOST_DATA/src]/mkspecs/features/uic.prf
+
+qtPrepareTool(QMAKE_UIC, uic)
+!exists($$QMAKE_UIC) {
+    qtPrepareLibExecTool(QMAKE_UIC, uic)
+}
+
+message("Called!")
+
+isEmpty(UI_DIR):UI_DIR = .
+isEmpty(QMAKE_MOD_UIC):QMAKE_MOD_UIC = ui_
+
+defineReplace(makeUicOutputDir) {
+    inputAbsolutePath = $$absolute_path($$1, $$OUT_PWD/$$UI_DIR)
+    intputAbsoluteDir = $$dirname(inputAbsolutePath)
+    proAbsoluteDir = $$absolute_path($$_PRO_FILE_PWD_)
+    proAbsoluteDirEscaped = $$re_escape($$proAbsoluteDir)
+    strippedInputDir = $$replace(intputAbsoluteDir, $$proAbsoluteDirEscaped,)
+    absoluteOutputDir = $$OUT_PWD/$$UI_DIR/$$strippedInputDir
+    relativeOutputDir = $$relative_path($$absoluteOutputDir, $$OUT_PWD/$$UI_DIR)
+    return($$relativeOutputDir)
+}
+
+uic.depends += $$QMAKE_UIC_EXE
+uic.commands = $$QMAKE_UIC $$QMAKE_UIC_FLAGS ${QMAKE_FILE_IN} -o ${QMAKE_FILE_OUT}
+uic.depend_command = $$QMAKE_UIC_DEP -d ${QMAKE_FILE_IN}
+uic.output = ${QMAKE_FUNC_makeUicOutputDir}/$${QMAKE_MOD_UIC}${QMAKE_FILE_BASE}$${first(QMAKE_EXT_H)}
+uic.input = FORMS
+uic.variable_out = GENERATED_FILES
+uic.CONFIG += no_link target_predeps dep_lines dep_existing_only
+uic.name = UIC ${QMAKE_FILE_IN}
+silent:uic.commands = @echo uic ${QMAKE_FILE_IN} && $$uic.commands
+QMAKE_EXTRA_COMPILERS += uic
+INCREDIBUILD_XGE += uic
+
+!isEmpty(FORMS) {
+    INCLUDEPATH += $$absolute_path($$UI_DIR, $$OUT_PWD)
+}

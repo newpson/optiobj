@@ -1,3 +1,2 @@
-include($$PWD/Config.pri)
-MY_PATH = $$PWD/Newpson/ObjParser/Demo/ObjParser.pri
-include($$MY_PATH)
+include($$PWD/config.pri)
+include($$PWD/Newpson/Obj/Parser/Demo/Demo.pri)

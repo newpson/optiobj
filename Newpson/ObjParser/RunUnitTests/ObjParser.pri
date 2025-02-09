@@ -1,9 +1,0 @@
-!NEWPSON_OBJPARSER_UNITTESTS_RUN_PRI {
-CONFIG += NEWPSON_OBJPARSER_UNITTESTS_RUN_PRI
-
-include($$PWD/../UnitTests/ObjParser.pri)
-
-SOURCES += \
-    $$PWD/main.cpp
-
-}

@@ -36,7 +36,7 @@
   <customwidget>
    <class>Newpson::Ui::GLWidget</class>
    <extends>QOpenGLWidget</extends>
-   <header>Newpson/Viewer/newpsonviewerglwidget.h</header>
+   <header>Newpson/Viewer/glwidget.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

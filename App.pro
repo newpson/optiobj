@@ -1,2 +1,2 @@
-include($$PWD/Config.pri)
+include($$PWD/config.pri)
 include($$PWD/Newpson/Viewer/Viewer.pri)

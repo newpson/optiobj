@@ -3,11 +3,11 @@ CONFIG += NEWPSON_VIEWER_PRI
 
 INCLUDEPATH *= $$clean_path($$PWD/../..)
 include($$PWD/../Mesh/Mesh.pri)
-include($$PWD/../ObjParser/ObjParser.pri)
+include($$PWD/../Obj/Parser/Parser.pri)
 
 HEADERS += \
-    $$PWD/newpsonviewerviewerwindow.h \
-    $$PWD/newpsonviewerglwidget.h \
+    $$PWD/viewerwindow.h \
+    $$PWD/glwidget.h \
 
 SOURCES += \
     $$PWD/main.cpp \

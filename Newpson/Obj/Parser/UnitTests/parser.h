@@ -1,23 +1,23 @@
-#ifndef NEWPSON_OBJPARSER_PARSER_TEST_H
-#define NEWPSON_OBJPARSER_PARSER_TEST_H
+#ifndef NEWPSON_OBJ_PARSER_UNITTESTS_PARSER_H
+#define NEWPSON_OBJ_PARSER_UNITTESTS_PARSER_H
 
 #include <QObject>
 #include <QString>
 #include <QTest>
 #include "Newpson/Mesh/mesh.h"
-#include "ObjParser/objparser.h"
+#include "Newpson/Obj/Parser/parser.h"
 
 Q_DECLARE_METATYPE(Newpson::ObjParser::Status)
 Q_DECLARE_METATYPE(Newpson::Mesh::ValidationResult)
 
 namespace Newpson::ObjParser::Test {
 
-class NewpsonObjParserTest: public QObject
+class Parser: public QObject
 {
     Q_OBJECT
 
 public:
-    NewpsonObjParserTest(QObject *parent = nullptr);
+    Parser(QObject *parent = nullptr);
 
 private slots:
     void testIndexMakeAbsolute_data();
@@ -50,4 +50,4 @@ private:
 
 }
 
-#endif // NEWPSON_OBJPARSER_PARSER_TEST_H
+#endif

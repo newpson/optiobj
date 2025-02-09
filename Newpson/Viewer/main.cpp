@@ -1,5 +1,5 @@
 #include <QApplication>
-#include "newpsonviewerviewerwindow.h"
+#include "Newpson/Viewer/viewerwindow.h"
 
 int main(int argc, char *argv[])
 {

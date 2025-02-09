@@ -1,4 +1,4 @@
-#include "ObjParser/objparser.h"
+#include "Newpson/Obj/Parser/parser.h"
 #include "Newpson/Mesh/mesh.h"
 
 #include <QDebug>

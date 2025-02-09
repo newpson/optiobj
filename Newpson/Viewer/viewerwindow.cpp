@@ -1,5 +1,5 @@
 #include <QWidget>
-#include "newpsonviewerviewerwindow.h"
+#include "viewerwindow.h"
 
 namespace Newpson::Ui {
 
@@ -9,5 +9,5 @@ ViewerWindow::ViewerWindow(QWidget *parent):
     setupUi(this);
 }
 
-} // namespace Newpson::Ui
+}
 

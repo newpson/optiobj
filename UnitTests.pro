@@ -1,2 +1,2 @@
-include($$PWD/Config.pri)
-include($$PWD/Newpson/ObjParser/RunUnitTests/ObjParser.pri)
+include($$PWD/config.pri)
+include($$PWD/Newpson/Obj/Parser/UnitTests/Run.pri)

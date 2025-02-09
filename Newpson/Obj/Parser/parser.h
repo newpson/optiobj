@@ -1,5 +1,5 @@
-#ifndef NEWPSON_OBJPARSER_PARSER_H
-#define NEWPSON_OBJPARSER_PARSER_H
+#ifndef NEWPSON_OBJ_PARSER_PARSER_H
+#define NEWPSON_OBJ_PARSER_PARSER_H
 
 #include "Newpson/Mesh/mesh.h"
 
@@ -52,4 +52,4 @@ Mesh load(QString const &filename, ParserResult &parserResult);
 
 }
 
-#endif // NEWPSON_OBJPARSER_PARSER_H
+#endif

@@ -1,7 +1,7 @@
-#ifndef NEWPSON_OBJPARSER_OBJPARSERINTERNAL_H
-#define NEWPSON_OBJPARSER_OBJPARSERINTERNAL_H
+#ifndef NEWPSON_OBJ_PARSER_PARSERINTERNAL_H
+#define NEWPSON_OBJ_PARSER_PARSERINTERNAL_H
 
-#include "ObjParser/objparser.h"
+#include "Newpson/Obj/Parser/parser.h"
 
 #include <QDebug>
 #include <QFile>
@@ -63,6 +63,6 @@ QVector3D generateNormal(
 QVector2D generateVerticesTexture();
 
 
-} // namespace Newpson::Parsing::Obj::Internal
+}
 
-#endif // NEWPSON_OBJPARSER_OBJPARSERINTERNAL_H
+#endif
