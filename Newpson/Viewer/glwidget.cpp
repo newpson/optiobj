@@ -1,10 +1,14 @@
+#include "Newpson/Viewer/glwidget.h"
+
 #include <QWidget>
 #include <QSurfaceFormat>
 #include <QVector>
 #include <QVector3D>
+#include <QMouseEvent>
+#include <QGuiApplication>
+
 #include "Newpson/Obj/Parser/parser.h"
 #include "Newpson/Mesh/mesh.h"
-#include "Newpson/Viewer/glwidget.h"
 
 namespace Newpson::Ui {
 
@@ -17,10 +21,13 @@ GLWidget::GLWidget(QWidget *parent):
     fmt.setVersion(2, 0);
     fmt.setProfile(QSurfaceFormat::CoreProfile);
     setFormat(fmt);
+
     Newpson::ObjParser::ParserResult result;
     m_mesh = Newpson::ObjParser::load(PROJECT_ASSETS "/ok/cow.obj", result);
-    if (result.status != Newpson::ObjParser::STATUS_OK)
+    if (result.status != Newpson::ObjParser::STATUS_OK) {
         qDebug() << "Loading mesh error:" << Newpson::ObjParser::statusToString(result.status);
+        return;
+    }
 
     Newpson::Mesh triMesh = m_mesh.triangulate();
     const QVector<int> &facesEnds = triMesh.facesEnds();
@@ -102,13 +109,6 @@ void GLWidget::initializeGL()
     m_objVbo.create();
     m_objVbo.bind();
 
-//     const float data[] = {
-// //      vertices        normals
-//         0.0, 0.0, 0.0,  0.0, 0.0, 1.0,
-//         1.0, 0.0, 0.0,  0.0, 1.0, 1.0,
-//         0.0, 1.0, 0.0,  1.0, 0.0, 1.0
-//     };
-
     const float *data = m_rawData.data();
 
     m_objVbo.allocate(data, m_rawData.length() * sizeof(float));
@@ -116,26 +116,29 @@ void GLWidget::initializeGL()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-    m_objVbo.release();
+//    m_objVbo.release();
 
     m_projection.setToIdentity();
-    m_view.lookAt(QVector3D(8, 4, 8), QVector3D(0, 0, 0), QVector3D(0, 1, 0));
-
+    m_view.lookAt(cameraEye, cameraCenter, cameraUp);
     m_program.setUniformValue(m_viewLoc, m_view);
 
     m_program.release();
-
 }
 
 void GLWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+//    glEnable(GL_CULL_FACE);
 
     m_program.bind();
+    m_view.setToIdentity();
+    m_view.lookAt(cameraEye, cameraCenter, cameraUp);
+    qDebug() << m_view;
+    m_program.setUniformValue(m_viewLoc, m_view);
 
     glDrawArrays(GL_TRIANGLES, 0, m_rawData.length() / 6);
+    // m_program.release();
 }
 
 void GLWidget::resizeGL(int width, int height)
@@ -145,5 +148,65 @@ void GLWidget::resizeGL(int width, int height)
     m_program.bind();
     m_program.setUniformValue(m_projectionLoc, m_projection);
 }
+
+void GLWidget::mousePressEvent(QMouseEvent *event)
+{
+    // TODO emit signal to Camera class (like pressed(MovementType)) ?
+    // TODO for all events methods
+    lastMousePosition = event->pos();
+    if (event->button() == Qt::MouseButton::MiddleButton) {
+        if (QGuiApplication::keyboardModifiers() == Qt::ShiftModifier) {
+            movementType = MOVEMENT_SLIDE;
+            return;
+        }
+        movementType = MOVEMENT_ROTATION;
+        return;
+    }
+    movementType = MOVEMENT_NONE;
+}
+
+void GLWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    // TODO emit signal to Camera class (like moved(Point delta in both axes))
+
+    switch (movementType) {
+    case MOVEMENT_ROTATION: {
+        QPointF mousePosition = event->pos();
+
+        float deltaY = mousePosition.y() - lastMousePosition.y();
+        float deltaX = mousePosition.x() - lastMousePosition.x();
+
+        QMatrix4x4 rotation;
+        rotation.rotate(-deltaX, cameraUp);
+        rotation.rotate(deltaY, QVector3D::crossProduct(cameraEye - cameraCenter, cameraUp));
+        cameraUp = rotation * cameraUp;
+        cameraEye = rotation * cameraEye;
+        update();
+
+        lastMousePosition = mousePosition;
+//        qDebug() << "rotation:" << deltaX << deltaY;
+        break;
+    }
+    case MOVEMENT_SLIDE: {
+        break;
+    }
+    case MOVEMENT_NONE:
+        break;
+    default:
+        qDebug() << "Unknown movement type";
+        return;
+    }
+
+//    qDebug() << event->pos();
+}
+
+void GLWidget::wheelEvent(QWheelEvent *event)
+{
+    float delta = event->angleDelta().y() / abs(event->angleDelta().y());
+    cameraEye += delta * (cameraCenter - cameraEye).normalized();
+    update();
+//    qDebug() << event->angleDelta();
+}
+
 
 }
