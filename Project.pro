@@ -1,2 +1,5 @@
 TEMPLATE = subdirs
-SUBDIRS = App.pro Demo.pro UnitTests.pro
+SUBDIRS = \
+    $$PWD/App.pro \
+    $$PWD/Demo.pro \
+    $$PWD/UnitTests.pro \

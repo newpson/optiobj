@@ -23,7 +23,8 @@ GLWidget::GLWidget(QWidget *parent):
     setFormat(fmt);
 
     Newpson::ObjParser::ParserResult result;
-    m_mesh = Newpson::ObjParser::load(PROJECT_ASSETS "/ok/cow.obj", result);
+    // m_mesh = Newpson::ObjParser::load("/home/newpson/temp/bugatti.obj", result);
+    m_mesh = Newpson::ObjParser::load(PROJECT_ASSETS "/ok/skull.obj", result);
     if (result.status != Newpson::ObjParser::STATUS_OK) {
         qDebug() << "Loading mesh error:" << Newpson::ObjParser::statusToString(result.status);
         return;
@@ -49,12 +50,7 @@ GLWidget::GLWidget(QWidget *parent):
         }
         faceBegin = faceEnd;
     }
-
-    qDebug() << "Buffer size:" << m_rawData.length() * sizeof(float) / 1024 / 1024 << "MB";
-    qDebug() << "Number of triangles:" << facesEnds.length();
-    qDebug() << "Done.";
 }
-
 
 void GLWidget::initializeGL()
 {
@@ -67,11 +63,14 @@ void GLWidget::initializeGL()
         "in vec3 position; \n"
         "in vec3 normal; \n"
         "out vec3 frag_normal; \n"
+        "out vec3 frag_camera; \n"
         "uniform mat4 view; \n"
         "uniform mat4 projection; \n"
+        "uniform vec3 camera; \n"
         " \n"
         "void main() \n"
         "{ \n"
+        "    frag_camera = camera; \n"
         "    frag_normal = normal; \n"
         "    gl_Position = projection * view * vec4(position, 1.0); \n"
         "} \n")) {
@@ -79,13 +78,19 @@ void GLWidget::initializeGL()
         return;
     }
     if (!m_program.addShaderFromSourceCode(QOpenGLShader::Fragment,
-        "#version 150\n"
-        " \n"
+        "#version 150 \n"
+        "\n"
+        "const vec3 sun = vec3(-1.0, -1.0, -1.0); \n"
+        "in highp vec3 frag_camera; \n"
         "in highp vec3 frag_normal; \n"
         " \n"
         "void main() \n"
         "{ \n"
-        "    gl_FragColor = vec4(frag_normal, 1.0); \n"
+        // "    vec3 reflected = reflect(sun, frag_normal); \n"
+        // "    float intensity = max(0.1, -dot(reflected, frag_camera)); \n"
+        // "    float intensity = clamp(1.0 - pow(dot(-sun, frag_normal), 3.0), 0.1, 1.0);"
+        "    float intensity = clamp(dot(-normalize(frag_camera), normalize(frag_normal)), 0.1, 1.0);"
+        "    gl_FragColor = vec4(intensity, intensity, intensity, 1.0); \n"
         "} \n")) {
         qDebug() << "Fragment shader compilation error:" << m_program.log();
         return;
@@ -106,6 +111,7 @@ void GLWidget::initializeGL()
 
     m_projectionLoc = m_program.uniformLocation("projection");
     m_viewLoc = m_program.uniformLocation("view");
+    m_dirLoc = m_program.uniformLocation("camera");
     m_objVbo.create();
     m_objVbo.bind();
 
@@ -116,11 +122,11 @@ void GLWidget::initializeGL()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-//    m_objVbo.release();
+    m_objVbo.release();
 
     m_projection.setToIdentity();
-    m_view.lookAt(cameraEye, cameraCenter, cameraUp);
-    m_program.setUniformValue(m_viewLoc, m_view);
+    m_program.setUniformValue(m_viewLoc, m_camera.view());
+    m_program.setUniformValue(m_dirLoc, m_camera.direction());
 
     m_program.release();
 }
@@ -129,16 +135,13 @@ void GLWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
-//    glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);
 
     m_program.bind();
-    m_view.setToIdentity();
-    m_view.lookAt(cameraEye, cameraCenter, cameraUp);
-    qDebug() << m_view;
-    m_program.setUniformValue(m_viewLoc, m_view);
-
+    m_program.setUniformValue(m_viewLoc, m_camera.view());
+    m_program.setUniformValue(m_dirLoc, m_camera.direction());
     glDrawArrays(GL_TRIANGLES, 0, m_rawData.length() / 6);
-    // m_program.release();
+    m_program.release();
 }
 
 void GLWidget::resizeGL(int width, int height)
@@ -151,62 +154,45 @@ void GLWidget::resizeGL(int width, int height)
 
 void GLWidget::mousePressEvent(QMouseEvent *event)
 {
-    // TODO emit signal to Camera class (like pressed(MovementType)) ?
-    // TODO for all events methods
-    lastMousePosition = event->pos();
-    if (event->button() == Qt::MouseButton::MiddleButton) {
+    m_mousePositionLast = event->pos();
+    if (event->button() == Qt::MouseButton::LeftButton) {
         if (QGuiApplication::keyboardModifiers() == Qt::ShiftModifier) {
-            movementType = MOVEMENT_SLIDE;
+            m_movementType = MOVEMENT_SLIDE;
             return;
         }
-        movementType = MOVEMENT_ROTATION;
+        m_movementType = MOVEMENT_ROTATION;
         return;
     }
-    movementType = MOVEMENT_NONE;
+    m_movementType = MOVEMENT_NONE;
 }
 
 void GLWidget::mouseMoveEvent(QMouseEvent *event)
 {
-    // TODO emit signal to Camera class (like moved(Point delta in both axes))
+    const QPointF mousePosition = event->pos();
+    const QPointF mouseMotion = mousePosition - m_mousePositionLast;
 
-    switch (movementType) {
-    case MOVEMENT_ROTATION: {
-        QPointF mousePosition = event->pos();
-
-        float deltaY = mousePosition.y() - lastMousePosition.y();
-        float deltaX = mousePosition.x() - lastMousePosition.x();
-
-        QMatrix4x4 rotation;
-        rotation.rotate(-deltaX, cameraUp);
-        rotation.rotate(deltaY, QVector3D::crossProduct(cameraEye - cameraCenter, cameraUp));
-        cameraUp = rotation * cameraUp;
-        cameraEye = rotation * cameraEye;
+    switch (m_movementType) {
+    case MOVEMENT_ROTATION:
+        m_camera.rotate(mouseMotion);
         update();
-
-        lastMousePosition = mousePosition;
-//        qDebug() << "rotation:" << deltaX << deltaY;
         break;
-    }
-    case MOVEMENT_SLIDE: {
+    case MOVEMENT_SLIDE:
+        m_camera.slide(mouseMotion);
+        update();
         break;
-    }
     case MOVEMENT_NONE:
         break;
     default:
-        qDebug() << "Unknown movement type";
-        return;
+        break;
     }
 
-//    qDebug() << event->pos();
+    m_mousePositionLast = mousePosition;
 }
 
 void GLWidget::wheelEvent(QWheelEvent *event)
 {
-    float delta = event->angleDelta().y() / abs(event->angleDelta().y());
-    cameraEye += delta * (cameraCenter - cameraEye).normalized();
+    m_camera.zoom(event->angleDelta().y());
     update();
-//    qDebug() << event->angleDelta();
 }
-
 
 }

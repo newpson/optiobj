@@ -8,6 +8,7 @@
 #include <QOpenGLBuffer>
 #include <QVector>
 #include "Newpson/Mesh/mesh.h"
+#include "Newpson/Viewer/camera.h"
 
 namespace Newpson::Ui {
 
@@ -44,13 +45,12 @@ private:
     QMatrix4x4 m_view;
     int m_projectionLoc;
     int m_viewLoc;
-    QPointF lastMousePosition;
+    int m_dirLoc;
+    QPointF m_mousePositionLast;
 
-    QVector3D cameraUp = QVector3D(0.0, 1.0, 0.0);
-    QVector3D cameraCenter = QVector3D(0.0, 0.0, 0.0);
-    QVector3D cameraEye = QVector3D(5.0, 0.0, 5.0);
+    Camera m_camera;
 
-    MovementType movementType = MOVEMENT_NONE;
+    MovementType m_movementType = MOVEMENT_NONE;
 };
 
 }
