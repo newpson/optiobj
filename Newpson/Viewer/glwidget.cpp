@@ -23,8 +23,7 @@ GLWidget::GLWidget(QWidget *parent):
     setFormat(fmt);
 
     Newpson::ObjParser::ParserResult result;
-    // m_mesh = Newpson::ObjParser::load("/home/newpson/temp/bugatti.obj", result);
-    m_mesh = Newpson::ObjParser::load(PROJECT_ASSETS "/ok/skull.obj", result);
+    m_mesh = Newpson::ObjParser::load(PROJECT_ASSETS "/ok/cow.obj", result);
     if (result.status != Newpson::ObjParser::STATUS_OK) {
         qDebug() << "Loading mesh error:" << Newpson::ObjParser::statusToString(result.status);
         return;
