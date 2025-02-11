@@ -1,14 +1,16 @@
-#include "Newpson/Viewer/camera.h"
+#include "Newpson/Viewer/Camera/camera.h"
 
 #include <QVector3D>
 #include <QMatrix4x4>
 #include <QPointF>
 #include <cmath>
 
-namespace Newpson {
+namespace Newpson::Viewer {
 
+//! REVIEW: rename
 void addSaveLength(const QVector3D &delta, QVector3D &v)
 {
+    //! REVIEW: const
     float vLength = v.length();
     v = (v + delta).normalized() * vLength;
 }

@@ -1,4 +1,5 @@
-#include "Newpson/Viewer/glwidget.h"
+#include "Newpson/Viewer/GLWidget/glwidget.h"
+#include <QtWidgets/QOpenGLWidget>
 
 #include <QWidget>
 #include <QSurfaceFormat>
@@ -10,7 +11,7 @@
 #include "Newpson/Obj/Parser/parser.h"
 #include "Newpson/Mesh/mesh.h"
 
-namespace Newpson::Ui {
+namespace Newpson::Viewer {
 
 GLWidget::GLWidget(QWidget *parent):
     QOpenGLWidget(parent)
@@ -21,34 +22,6 @@ GLWidget::GLWidget(QWidget *parent):
     fmt.setVersion(2, 0);
     fmt.setProfile(QSurfaceFormat::CoreProfile);
     setFormat(fmt);
-
-    Newpson::ObjParser::ParserResult result;
-    m_mesh = Newpson::ObjParser::load(PROJECT_ASSETS "/ok/cow.obj", result);
-    if (result.status != Newpson::ObjParser::STATUS_OK) {
-        qDebug() << "Loading mesh error:" << Newpson::ObjParser::statusToString(result.status);
-        return;
-    }
-
-    Newpson::Mesh triMesh = m_mesh.triangulate();
-    const QVector<int> &facesEnds = triMesh.facesEnds();
-    const QVector<QVector3D> &vertices = triMesh.vertices();
-    const QVector<QVector3D> &normals = triMesh.normals();
-    const QVector<int> &indicesVertices = triMesh.indicesVertices();
-    const QVector<int> &indicesNormals = triMesh.indicesNormals();
-
-    m_rawData.reserve(facesEnds.length() * 6 * 3);
-    int faceBegin = 0;
-    for (int faceEnd : facesEnds) {
-        for (int i = faceBegin; i < faceEnd; ++i) {
-            m_rawData.append(vertices[indicesVertices[i]].x());
-            m_rawData.append(vertices[indicesVertices[i]].y());
-            m_rawData.append(vertices[indicesVertices[i]].z());
-            m_rawData.append(normals[indicesNormals[i]].x());
-            m_rawData.append(normals[indicesNormals[i]].y());
-            m_rawData.append(normals[indicesNormals[i]].z());
-        }
-        faceBegin = faceEnd;
-    }
 }
 
 void GLWidget::initializeGL()
@@ -76,6 +49,7 @@ void GLWidget::initializeGL()
         qDebug() << "Vertex shader compilation error:" << m_program.log();
         return;
     }
+
     if (!m_program.addShaderFromSourceCode(QOpenGLShader::Fragment,
         "#version 150 \n"
         "\n"
@@ -111,17 +85,17 @@ void GLWidget::initializeGL()
     m_projectionLoc = m_program.uniformLocation("projection");
     m_viewLoc = m_program.uniformLocation("view");
     m_dirLoc = m_program.uniformLocation("camera");
-    m_objVbo.create();
-    m_objVbo.bind();
+    m_vbo.create();
+    m_vbo.bind();
 
     const float *data = m_rawData.data();
 
-    m_objVbo.allocate(data, m_rawData.length() * sizeof(float));
+    m_vbo.allocate(data, m_rawData.length() * sizeof(float));
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(0 * sizeof(GLfloat)));
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
-    m_objVbo.release();
+    m_vbo.release();
 
     m_projection.setToIdentity();
     m_program.setUniformValue(m_viewLoc, m_camera.view());
@@ -137,6 +111,12 @@ void GLWidget::paintGL()
     glEnable(GL_CULL_FACE);
 
     m_program.bind();
+    /*
+        for (int i = 0; i < renderableTargets; ++i)
+        {
+            glDrawArrays(GL_TRIANGLES, targets.starts[i], targets.lengths[i]);
+        }
+    */
     m_program.setUniformValue(m_viewLoc, m_camera.view());
     m_program.setUniformValue(m_dirLoc, m_camera.direction());
     glDrawArrays(GL_TRIANGLES, 0, m_rawData.length() / 6);

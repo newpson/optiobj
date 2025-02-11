@@ -5,7 +5,7 @@
 #include <QVector3D>
 #include <QMatrix4x4>
 
-namespace Newpson {
+namespace Newpson::Viewer {
 
 class Camera
 {

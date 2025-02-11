@@ -1,6 +1,3 @@
-#include "Newpson/Obj/Parser/parser.h"
-#include "Newpson/Mesh/mesh.h"
-
 #include <QDebug>
 #include <QFile>
 #include <QString>
@@ -8,6 +5,9 @@
 #include <QVector>
 #include <QVector3D>
 #include <QVector2D>
+
+#include "Newpson/Obj/Parser/parser.h"
+#include "Newpson/Mesh/mesh.h"
 
 int main()
 {
