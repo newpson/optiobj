@@ -3,6 +3,7 @@
 #include <cctype> // FIXME use `<locale>`
 #include <charconv>
 #include <optional>
+#include <cstddef>
 
 #include <iostream>
 
@@ -10,6 +11,7 @@ using std::ifstream;
 using std::string;
 using std::isspace;
 using citer = string::const_iterator;
+using std::size_t;
 
 // TODO maybe remove `inline`, check on godbolt ================================
 inline void skip_space(citer &iter, const citer &end)
@@ -69,7 +71,7 @@ LineType parse_linetype(citer &iter, const citer &end)
 
     if (*iter == 'f' && is_next_endspace(iter, end))
         return LineType::FACE;
-    
+
     if (*iter == 'g' && is_next_endspace(iter, end))
         return LineType::GROUP;
 
@@ -141,7 +143,7 @@ Triad parse_triad(citer &iter, const citer &end)
     // `pr//`
     if (is_endspace(iter, end))
         throw ParsingError(ParsingError::Type::EXPECTED_INTEGER, end - iter);
-    
+
     // `pr/[tr]/nr`
     triad.normal_ref = parse_index(iter, end);
     return triad;
@@ -152,23 +154,22 @@ bool Triad::is_coherent_to(const Triad &another) const
     if (position_ref == std::nullopt && another.position_ref != std::nullopt
         || position_ref != std::nullopt && another.position_ref == std::nullopt)
         return false;
-    
+
     if (texture_ref == std::nullopt && another.texture_ref != std::nullopt
         || texture_ref != std::nullopt && another.texture_ref == std::nullopt)
         return false;
-    
+
     if (normal_ref == std::nullopt && another.normal_ref != std::nullopt
         || normal_ref != std::nullopt && another.normal_ref == std::nullopt)
         return false;
-    
+
     return true;
 }
 
 bool Triad::is_empty() const
 {
-    return !(position_ref.has_value() || texture_ref.has_value() || normal_ref.has_value()); 
+    return !(position_ref.has_value() || texture_ref.has_value() || normal_ref.has_value());
 }
-
 
 vector<Triad> parse_triads(citer &iter, const citer &end)
 {
@@ -185,7 +186,7 @@ vector<Triad> parse_triads(citer &iter, const citer &end)
         else
             throw ParsingError(ParsingError::Type::COMPONENTS_INCOHERENCE);
     }
-    
+
     if (triads.size() < 3)
         throw ParsingError(ParsingError::Type::EXPECTED_INTEGER);
 
@@ -203,12 +204,25 @@ string parse_group_name(citer &iter, const citer &end)
     return string(name_begin, iter);
 }
 
+vec3 generate_normal(const vector<Triad> &face, const vector<vec3> &positions)
+{
+    // generate as average of normals of all triangles in polygon
+    vec3 normals_sum;
+    for (int i = 1; i < face.size() - 1; ++i) {
+        const vec3 a(positions[face[i].position_ref.value()] - positions[face[0].position_ref.value()]);
+        const vec3 b(positions[face[i+1].position_ref.value()] - positions[face[0].position_ref.value()]);
+        normals_sum += glm::cross(a, b);
+    }
+    return glm::normalize(normals_sum);
+}
+
 Mesh load(istream &input)
 {
     vector<vec3> positions;
-    vector<vec2> textures;
+    vector<vec2> textures = { vec2(0, 0) };
+    constexpr size_t TEXTURE_DEFAULT_ID = 0;
     vector<vec3> normals;
-    
+
     vector<int> positions_refs;
     vector<int> textures_refs;
     vector<int> normals_refs;
@@ -216,7 +230,7 @@ Mesh load(istream &input)
 
     vector<int> groups_ends = {0};
     vector<string> groups_names = {"default"};
-    
+
     int line_number = 0;
     while (!input.eof()) {
         string line_buffer;
@@ -254,12 +268,16 @@ Mesh load(istream &input)
             case LineType::FACE:
                 try {
                     const auto triads = parse_triads(line_iter, line_end);
+                    int generated_normal_ref = -1;
+                    if (triads[0].normal_ref == std::nullopt) {
+                        normals.push_back(generate_normal(triads, positions));
+                        generated_normal_ref = normals.size() - 1;
+                    }
                     for (const Triad &triad: triads) {
                         positions_refs.push_back(triad.position_ref.value());
-                        if (triad.texture_ref != std::nullopt) // FIXME bullshit comparison #1
-                            textures_refs.push_back(triad.texture_ref.value());
-                        if (triad.normal_ref != std::nullopt) // FIXME bullshit comparison #2
-                            normals_refs.push_back(triad.normal_ref.value());
+                        // FIXME kinda stupid checks inside loop
+                        textures_refs.push_back(triad.texture_ref == std::nullopt ? TEXTURE_DEFAULT_ID : triad.texture_ref.value());
+                        normals_refs.push_back(triad.normal_ref == std::nullopt ? generated_normal_ref : triad.normal_ref.value());
                     }
                     refs_ends.push_back(positions_refs.size());
                 } catch (const ParsingError &error) {
@@ -268,13 +286,13 @@ Mesh load(istream &input)
                 break;
             case LineType::GROUP:
                 groups_names.push_back(parse_group_name(line_iter, line_end));
-                groups_ends.push_back(refs_ends.size());
+                groups_ends.push_back(refs_ends.size() - 1);
                 break;
             case LineType::UNKNOWN:
                 break;
         }
     }
-    groups_ends.push_back(refs_ends.size());
+    groups_ends.push_back(refs_ends.size() - 1);
 
     return Mesh(positions, textures, normals,
                 positions_refs, textures_refs, normals_refs,
