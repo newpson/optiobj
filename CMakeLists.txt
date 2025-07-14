@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(app)
 target_sources(app
-    PRIVATE    
+    PRIVATE
     main.cpp
     parser.cpp
     mesh.cpp
@@ -37,3 +37,30 @@ target_include_directories(imgui
     PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/imgui
     ${CMAKE_CURRENT_LIST_DIR}/imgui/backends)
+
+find_package(glfw3 REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
+
+add_executable(app-gui)
+target_sources(app-gui
+    PRIVATE
+    main-gui.cpp
+    parser.cpp
+    mesh.cpp
+    PUBLIC
+    mesh.hpp
+    parser.hpp)
+target_link_libraries(app-gui
+    PUBLIC
+    imgui
+    glfw
+    OpenGL::GL
+    GLEW::GLEW)
+target_compile_options(app-gui
+    PUBLIC
+    "-fsanitize=address"
+    "-g")
+target_link_options(app-gui
+    PUBLIC
+    "-fsanitize=address")
