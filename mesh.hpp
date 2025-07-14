@@ -21,6 +21,8 @@ struct Mesh
     const vector<int> groups_ends;
     const vector<string> groups_names;
 
+    Mesh() = default;
+
     Mesh(const vector<vec3> &positions,
          const vector<vec2> &textures,
          const vector<vec3> &normals,
@@ -32,4 +34,5 @@ struct Mesh
          const vector<string> &groups_names = {"default"});
 
     Mesh triangulate() const;
+    // TODO maybe create custom chained iterator over groups -> faces -> positions/textures/normals
 };
