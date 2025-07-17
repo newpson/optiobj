@@ -2,6 +2,7 @@
 
 #include <format>
 #include <stdexcept>
+#include <memory>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -11,14 +12,14 @@
 
 using std::string;
 
-Shader Shader::from_file(const string &path, GLenum type)
+std::shared_ptr<const Shader> Shader::from_file(const string &path, GLenum type)
 {
     return from_string(file_to_string(path), type);
 }
 
-Shader Shader::from_string(const string &source, GLenum type)
+std::shared_ptr<const Shader> Shader::from_string(const string &source, GLenum type)
 {
-    return Shader(source, type);
+    return std::shared_ptr<const Shader>(new Shader(source, type));
 }
 
 Shader::Shader(const string &source, GLenum type)
