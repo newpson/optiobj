@@ -13,6 +13,12 @@
 using std::shared_ptr;
 using std::runtime_error;
 
+shared_ptr<Program> Program::from_shaders(const shared_ptr<const Shader> &shader_vertex,
+                                          const shared_ptr<const Shader> &shader_fragment)
+{
+    return shared_ptr<Program>(new Program(shader_vertex, shader_fragment));
+}
+
 Program::Program(const shared_ptr<const Shader> &shader_vertex,
             const shared_ptr<const Shader> &shader_fragment)
     : m_shader_vertex(shader_vertex), m_shader_fragment(shader_fragment)
