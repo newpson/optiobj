@@ -1,8 +1,11 @@
 #include "program.hpp"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <format>
-#include <stdexcept>
 #include <memory>
+#include <stdexcept>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -10,17 +13,18 @@
 #include "shader.hpp"
 #include "status.hpp"
 
-using std::shared_ptr;
 using std::runtime_error;
+using std::shared_ptr;
+using glm::mat4;
 
-shared_ptr<Program> Program::from_shaders(const shared_ptr<const Shader> &shader_vertex,
-                                          const shared_ptr<const Shader> &shader_fragment)
+shared_ptr<const Program> Program::from_shaders(const shared_ptr<const Shader> &shader_vertex,
+                                                const shared_ptr<const Shader> &shader_fragment)
 {
-    return shared_ptr<Program>(new Program(shader_vertex, shader_fragment));
+    return shared_ptr<const Program>(new Program(shader_vertex, shader_fragment));
 }
 
 Program::Program(const shared_ptr<const Shader> &shader_vertex,
-            const shared_ptr<const Shader> &shader_fragment)
+                 const shared_ptr<const Shader> &shader_fragment)
     : m_shader_vertex(shader_vertex), m_shader_fragment(shader_fragment)
 {
     m_id = glCreateProgram();
@@ -40,12 +44,49 @@ Program::Program(const shared_ptr<const Shader> &shader_vertex,
     }
 }
 
+GLint Program::get_attribute_location(const GLchar * const name) const
+{
+    GLint location = glGetAttribLocation(m_id, name);
+    if (location < 0)
+        throw runtime_error(std::format(
+            "unable to find attribute \"{}\" in program #{}", name, m_id));
+    return location;
+}
+
+GLint Program::get_uniform_location(const GLchar * const name) const
+{
+    GLint location = glGetUniformLocation(m_id, name);
+    if (location < 0)
+        throw runtime_error(std::format(
+            "unable to find uniform \"{}\" in program #{}", name, m_id));
+    return location;
+}
+
+void Program::set_uniform(const GLint location, const float value) const
+{
+    glUseProgram(m_id);
+    glUniform1f(location, value);
+}
+
+void Program::set_uniform(const GLint location, const mat4 &matrix) const
+{
+    glUseProgram(m_id);
+    glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(matrix));
+}
+
+void Program::set_uniform(const GLint location, const vec2 &vector) const
+{
+    glUseProgram(m_id);
+    glUniform2f(location, vector.x, vector.y);
+
+}
+
 Program::~Program()
 {
     glDeleteProgram(m_id);
 }
 
-GLuint Program::id()
+GLuint Program::id() const
 {
     return m_id;
 }

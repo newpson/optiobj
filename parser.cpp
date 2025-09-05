@@ -102,7 +102,7 @@ int parse_index(citer &iter, const citer &end)
     const auto result = std::from_chars(content_begin.base(), iter.base(), parsed_value);
     if (result.ec == std::errc::invalid_argument || result.ec == std::errc::result_out_of_range)
         throw ParsingError(ParsingError::Type::EXPECTED_INTEGER, end - content_begin);
-    return parsed_value;
+    return parsed_value - 1; // TODO negative indices support
 }
 
 vec3 parse_vec3(citer &iter, const citer &end)
