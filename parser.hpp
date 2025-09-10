@@ -1,20 +1,15 @@
 #pragma once
-#include <stdexcept>
-#include <optional>
-#include "mesh.hpp"
 #include <istream>
-
-using std::runtime_error;
-using std::string;
-using std::istream;
-using std::optional;
+#include <optional>
+#include <stdexcept>
+#include "mesh.hpp"
 
 struct Triad
 {
     // `pr/tr/nr`
-    optional<int> position_ref;
-    optional<int> texture_ref;
-    optional<int> normal_ref;
+    std::optional<int> position_ref;
+    std::optional<int> texture_ref;
+    std::optional<int> normal_ref;
 
     bool is_coherent_to(const Triad &triad) const;
     bool is_empty() const;
@@ -32,7 +27,7 @@ enum class LineType
     UNKNOWN,
 };
 
-struct ParsingError: public runtime_error
+struct ParsingError: public std::runtime_error
 {
     enum class Type
     {
@@ -47,7 +42,7 @@ struct ParsingError: public runtime_error
     };
 
     // FIXME bullshit string conversion
-    static string message(const Type type)
+    static std::string message(const Type type)
     {
         switch (type) {
         case Type::EXPECTED_FLOAT: return "float expected";
@@ -67,7 +62,7 @@ struct ParsingError: public runtime_error
     const Type type;
 
     ParsingError(const Type type, const int column = -1, const int line = -1)
-        : runtime_error(message(type)), type(type), column(column), line(line)
+        : runtime_error(message(type)), column(column), line(line), type(type)
     {}
 
     ParsingError(const ParsingError &error)
@@ -75,5 +70,5 @@ struct ParsingError: public runtime_error
     {}
 };
 
-Mesh load(istream &input);
-Mesh load(const string &filename);
+Mesh load(std::istream &input);
+Mesh load(const std::string &filename);

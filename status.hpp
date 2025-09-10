@@ -2,14 +2,12 @@
 #include <cstddef>
 #include <GLFW/glfw3.h>
 
-using std::size_t;
-
-class InstantStatusStorage
+class GLStatus
 {
 public:
-    InstantStatusStorage(const size_t size = 512);
-    InstantStatusStorage(const InstantStatusStorage &) = delete;
-    ~InstantStatusStorage();
+    GLStatus(const std::size_t size = 512);
+    GLStatus(const GLStatus &) = delete;
+    ~GLStatus();
 
     GLchar * writable_log();
     int * writeable_success_int();

@@ -1,28 +1,23 @@
 #include "shader.hpp"
-
 #include <format>
-#include <stdexcept>
 #include <memory>
-
+#include <stdexcept>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-
-#include "utility.hpp"
 #include "status.hpp"
+#include "util.hpp"
 
-using std::string;
-
-std::shared_ptr<const Shader> Shader::from_file(const string &path, GLenum type)
+std::shared_ptr<const Shader> Shader::from_file(const std::string &path, GLenum type)
 {
     return from_string(file_to_string(path), type);
 }
 
-std::shared_ptr<const Shader> Shader::from_string(const string &source, GLenum type)
+std::shared_ptr<const Shader> Shader::from_string(const std::string &source, GLenum type)
 {
     return std::shared_ptr<const Shader>(new Shader(source, type));
 }
 
-Shader::Shader(const string &source, GLenum type)
+Shader::Shader(const std::string &source, GLenum type)
     : m_id(glCreateShader(type))
 {
     if (m_id == 0)
@@ -31,7 +26,7 @@ Shader::Shader(const string &source, GLenum type)
     const GLchar * const source_cstr = source.c_str();
     glShaderSource(m_id, 1, &source_cstr, NULL);
 
-    InstantStatusStorage status;
+    GLStatus status;
     glCompileShader(m_id);
     glGetShaderiv(m_id, GL_COMPILE_STATUS, status.writeable_success_int());
     if (!status.is_success()) {

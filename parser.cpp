@@ -1,17 +1,12 @@
 #include "parser.hpp"
-#include <fstream>
 #include <cctype> // FIXME use `<locale>`
 #include <charconv>
-#include <optional>
 #include <cstddef>
+#include <fstream>
+#include <istream>
+#include <optional>
 
-#include <iostream>
-
-using std::ifstream;
-using std::string;
-using std::isspace;
-using citer = string::const_iterator;
-using std::size_t;
+using citer = std::string::const_iterator;
 
 // TODO maybe remove `inline`, check on godbolt ================================
 inline void skip_space(citer &iter, const citer &end)
@@ -36,14 +31,14 @@ inline void skip_nonspace(citer &iter, const citer &end)
         ++iter;
 }
 
-inline bool is_delim(citer &iter, const citer &end)
+inline bool is_delim(citer &iter)
 {
     return (*iter == '/');
 }
 
 inline void skip_nondelim(citer &iter, const citer &end)
 {
-    while (!is_endspace(iter, end) && !is_delim(iter, end))
+    while (!is_endspace(iter, end) && !is_delim(iter))
         ++iter;
 }
 // =============================================================================
@@ -105,17 +100,17 @@ int parse_index(citer &iter, const citer &end)
     return parsed_value - 1; // TODO negative indices support
 }
 
-vec3 parse_vec3(citer &iter, const citer &end)
+glm::vec3 parse_vec3(citer &iter, const citer &end)
 {
-    vec3 position;
+    glm::vec3 position;
     for (int i = 0; i < 3; ++i)
         position[i] = parse_double(iter, end);
     return position;
 }
 
-vec2 parse_vec2(citer &iter, const citer &end)
+glm::vec2 parse_vec2(citer &iter, const citer &end)
 {
-    vec2 texture;
+    glm::vec2 texture;
     for (int i = 0; i < 2; ++i)
         texture[i] = parse_double(iter, end);
     return texture;
@@ -133,7 +128,7 @@ Triad parse_triad(citer &iter, const citer &end)
         return triad;
     ++iter;
 
-    if (!is_delim(iter, end))
+    if (!is_delim(iter))
         triad.texture_ref = parse_index(iter, end);
     // `pr/tr`
     if (is_endspace(iter, end))
@@ -151,16 +146,16 @@ Triad parse_triad(citer &iter, const citer &end)
 
 bool Triad::is_coherent_to(const Triad &another) const
 {
-    if (position_ref == std::nullopt && another.position_ref != std::nullopt
-        || position_ref != std::nullopt && another.position_ref == std::nullopt)
+    if ((position_ref == std::nullopt && another.position_ref != std::nullopt)
+        || (position_ref != std::nullopt && another.position_ref == std::nullopt))
         return false;
 
-    if (texture_ref == std::nullopt && another.texture_ref != std::nullopt
-        || texture_ref != std::nullopt && another.texture_ref == std::nullopt)
+    if ((texture_ref == std::nullopt && another.texture_ref != std::nullopt)
+        || (texture_ref != std::nullopt && another.texture_ref == std::nullopt))
         return false;
 
-    if (normal_ref == std::nullopt && another.normal_ref != std::nullopt
-        || normal_ref != std::nullopt && another.normal_ref == std::nullopt)
+    if ((normal_ref == std::nullopt && another.normal_ref != std::nullopt)
+        || (normal_ref != std::nullopt && another.normal_ref == std::nullopt))
         return false;
 
     return true;
@@ -171,9 +166,9 @@ bool Triad::is_empty() const
     return !(position_ref.has_value() || texture_ref.has_value() || normal_ref.has_value());
 }
 
-vector<Triad> parse_triads(citer &iter, const citer &end)
+std::vector<Triad> parse_triads(citer &iter, const citer &end)
 {
-    vector<Triad> triads;
+    std::vector<Triad> triads;
     triads.reserve(3);
 
     triads.push_back(parse_triad(iter, end));
@@ -193,47 +188,49 @@ vector<Triad> parse_triads(citer &iter, const citer &end)
     return triads;
 }
 
-string parse_group_name(citer &iter, const citer &end)
+std::string parse_group_name(citer &iter, const citer &end)
 {
     skip_space(iter, end);
     if (is_endspace(iter, end))
         throw ParsingError(ParsingError::Type::EXPECTED_STRING);
     const citer name_begin = iter;
     skip_nonspace(iter, end);
-    // discard all group names but first
-    return string(name_begin, iter);
+    // discard all group names except first
+    return std::string(name_begin, iter);
 }
 
-vec3 generate_normal(const vector<Triad> &face, const vector<vec3> &positions)
+glm::vec3 generate_normal(const std::vector<Triad> &face, const std::vector<glm::vec3> &positions)
 {
     // generate as average of normals of all triangles in polygon
-    vec3 normals_sum;
-    for (int i = 1; i < face.size() - 1; ++i) {
-        const vec3 a(positions[face[i].position_ref.value()] - positions[face[0].position_ref.value()]);
-        const vec3 b(positions[face[i+1].position_ref.value()] - positions[face[0].position_ref.value()]);
+    glm::vec3 normals_sum;
+    for (std::size_t i = 1; i < face.size() - 1; ++i) {
+        const glm::vec3 a(positions[face[i].position_ref.value()]
+                          - positions[face[0].position_ref.value()]);
+        const glm::vec3 b(positions[face[i+1].position_ref.value()]
+                          - positions[face[0].position_ref.value()]);
         normals_sum += glm::cross(a, b);
     }
     return glm::normalize(normals_sum);
 }
 
-Mesh load(istream &input)
+Mesh load(std::istream &input)
 {
-    vector<vec3> positions;
-    vector<vec2> textures = { vec2(0, 0) };
+    std::vector<glm::vec3> positions;
+    std::vector<glm::vec2> textures = { glm::vec2(0, 0) };
     constexpr size_t TEXTURE_DEFAULT_ID = 0;
-    vector<vec3> normals;
+    std::vector<glm::vec3> normals;
 
-    vector<int> positions_refs;
-    vector<int> textures_refs;
-    vector<int> normals_refs;
-    vector<int> refs_ends = {0};
+    std::vector<int> positions_refs;
+    std::vector<int> textures_refs;
+    std::vector<int> normals_refs;
+    std::vector<int> refs_ends = {0};
 
-    vector<int> groups_ends = {0};
-    vector<string> groups_names = {"default"};
+    std::vector<int> groups_ends = {0};
+    std::vector<std::string> groups_names = {"default"};
 
     int line_number = 0;
     while (!input.eof()) {
-        string line_buffer;
+        std::string line_buffer;
         std::getline(input, line_buffer);
         ++line_number;
         if (line_buffer.empty())
@@ -242,7 +239,7 @@ Mesh load(istream &input)
         // TODO wrap to function
         while (*(line_buffer.end() - 1) == '\\') {
             *(line_buffer.end() - 1) = ' ';
-            string line_buffer_next;
+            std::string line_buffer_next;
             std::getline(input, line_buffer_next);
             line_buffer += line_buffer_next;
             ++line_number;
@@ -299,9 +296,9 @@ Mesh load(istream &input)
                 refs_ends, groups_ends, groups_names);
 }
 
-Mesh load(const string &filename)
+Mesh load(const std::string &filename)
 {
-    ifstream input(filename, std::ios::in);
+    std::ifstream input(filename, std::ios::in);
     if (!input.is_open())
         throw ParsingError(ParsingError::Type::INPUT);
 

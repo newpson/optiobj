@@ -1,37 +1,31 @@
 #pragma once
-
-#include <glm/glm.hpp>
-#include <vector>
 #include <string>
-
-using std::vector;
-using std::string;
-using glm::vec3;
-using glm::vec2;
+#include <vector>
+#include <glm/glm.hpp>
 
 struct Mesh
 {
-    const vector<vec3> positions;
-    const vector<vec2> textures;
-    const vector<vec3> normals;
-    const vector<int> positions_refs;
-    const vector<int> textures_refs;
-    const vector<int> normals_refs;
-    const vector<int> refs_ends;
-    const vector<int> groups_ends;
-    const vector<string> groups_names;
+    const std::vector<glm::vec3> positions;
+    const std::vector<glm::vec2> textures;
+    const std::vector<glm::vec3> normals;
+    const std::vector<int> positions_refs;
+    const std::vector<int> textures_refs;
+    const std::vector<int> normals_refs;
+    const std::vector<int> refs_ends;
+    const std::vector<int> groups_ends;
+    const std::vector<std::string> groups_names;
 
     Mesh() = default;
 
-    Mesh(const vector<vec3> &positions,
-         const vector<vec2> &textures,
-         const vector<vec3> &normals,
-         const vector<int> &positions_refs,
-         const vector<int> &textures_refs,
-         const vector<int> &normals_refs,
-         const vector<int> &refs_ends = {0},
-         const vector<int> &groups_ends = {0},
-         const vector<string> &groups_names = {"default"});
+    Mesh(const std::vector<glm::vec3> &positions,
+         const std::vector<glm::vec2> &textures,
+         const std::vector<glm::vec3> &normals,
+         const std::vector<int> &positions_refs,
+         const std::vector<int> &textures_refs,
+         const std::vector<int> &normals_refs,
+         const std::vector<int> &refs_ends = {0},
+         const std::vector<int> &groups_ends = {0},
+         const std::vector<std::string> &groups_names = {"default"});
 
     Mesh triangulate() const;
     // TODO maybe create custom chained iterator over groups -> faces -> positions/textures/normals

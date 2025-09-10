@@ -1,37 +1,29 @@
-// #include <stdexcept>
+#include "mesh.hpp"
+#include <string>
 #include <vector>
 #include <glm/glm.hpp>
-#include <string>
-#include "mesh.hpp"
 
-using glm::vec3;
-using std::vector;
-using std::string;
-
-Mesh::Mesh(const vector<vec3> &positions,
-           const vector<vec2> &textures,
-           const vector<vec3> &normals,
-           const vector<int> &positions_refs,
-           const vector<int> &textures_refs,
-           const vector<int> &normals_refs,
-           const vector<int> &refs_ends,
-           const vector<int> &groups_ends,
-           const vector<string> &groups_names)
+Mesh::Mesh(const std::vector<glm::vec3> &positions,
+           const std::vector<glm::vec2> &textures,
+           const std::vector<glm::vec3> &normals,
+           const std::vector<int> &positions_refs,
+           const std::vector<int> &textures_refs,
+           const std::vector<int> &normals_refs,
+           const std::vector<int> &refs_ends,
+           const std::vector<int> &groups_ends,
+           const std::vector<std::string> &groups_names)
      : positions(positions), textures(textures), normals(normals),
      positions_refs(positions_refs), textures_refs(textures_refs), normals_refs(normals_refs),
      refs_ends(refs_ends), groups_ends(groups_ends), groups_names(groups_names)
-{
-    // if (!is_consistent())
-    //     throw std::runtime_error("Inconsistent"); // TODO custom exception
-}
+{}
 
 Mesh Mesh::triangulate() const
 {
-    vector<int> new_positions_refs;
-    vector<int> new_textures_refs;
-    vector<int> new_normals_refs;
-    vector<int> new_refs_ends = {0};
-    vector<int> new_groups_ends = {0};
+    std::vector<int> new_positions_refs;
+    std::vector<int> new_textures_refs;
+    std::vector<int> new_normals_refs;
+    std::vector<int> new_refs_ends = {0};
+    std::vector<int> new_groups_ends = {0};
 
     for (int i = 0; i < groups_ends.size()-1; ++i) {
         for (int j = groups_ends[i]; j < groups_ends[i+1]; ++j)
