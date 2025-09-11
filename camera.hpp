@@ -6,16 +6,19 @@
 class Camera: protected Transformation
 {
 public:
-    Camera(const float fov = glm::radians(75.0f),
-              const float aspect_ratio = 16.0f/9.0f,
+    Camera(const float fov = glm::radians(70.0f),
+              const float aspect_ratio = 800.0f/600.0f,
               const glm::vec2 &clip_space = glm::vec2(0.1f, 10.0f));
     void translate(const glm::vec3 &deltas);
     void rotate(const glm::vec3 &deltas);
     glm::mat4 perspective() const;
     glm::mat4 ortho() const;
-    using Transformation::matrix;
+    glm::mat4 matrix() const;
+    // bro...
+    float pitch() const;
 
 protected:
+    static glm::mat4 local_rotate(const glm::mat4 &m, const glm::vec3 &angles);
     const float m_fov;
     const float m_aspect_ratio;
     const glm::vec2 m_clip_space;

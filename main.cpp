@@ -24,34 +24,34 @@ void print_error()
 	}
 }
 
-class SkyUpdater: public InputProvider::MouseListener
-{
-	glm::vec2 last_values;
-	GLint u_camera_pitch;
-	std::shared_ptr<const Program> program;
-	float pitch = 0.0;
+// class SkyUpdater: public InputProvider::MouseListener
+// {
+// 	glm::vec2 last_values;
+// 	GLint u_camera_pitch;
+// 	std::shared_ptr<const Program> program;
+// 	float pitch = 0.0;
 
-public:
-	SkyUpdater(std::shared_ptr<const Program> program): program(program)
-	{
-		u_camera_pitch = program->get_uniform_location("u_camera_pitch");
-	}
+// public:
+// 	SkyUpdater(std::shared_ptr<const Program> program): program(program)
+// 	{
+// 		u_camera_pitch = program->get_uniform_location("u_camera_pitch");
+// 	}
 
-	virtual void on_mouse_move(glm::vec2 values) override
-	{
-		const glm::vec2 delta = values - last_values;
-		// std::cout << "moving mouse: " << delta.x << " " << delta.y << std::endl;
-		pitch += 0.01 * delta.y;
-		if (pitch > 3.1415/2.0)
-			pitch = 3.1415/2.0;
-		if (pitch < -3.1415/2.0)
-			pitch = -3.1415/2.0;
-	    program->set_uniform(u_camera_pitch, pitch);
-		last_values = values;
-	}
-	virtual void on_mouse_button(int button, int action, int mods) override {}
-	virtual void on_mouse_scroll(glm::vec2 values) override {}
-};
+// 	virtual void on_mouse_move(glm::vec2 values) override
+// 	{
+// 		const glm::vec2 delta = values - last_values;
+// 		// std::cout << "moving mouse: " << delta.x << " " << delta.y << std::endl;
+// 		pitch += 0.01 * delta.y;
+// 		if (pitch > 3.1415/2.0)
+// 			pitch = 3.1415/2.0;
+// 		if (pitch < -3.1415/2.0)
+// 			pitch = -3.1415/2.0;
+// 	    program->set_uniform(u_camera_pitch, pitch);
+// 		last_values = values;
+// 	}
+// 	virtual void on_mouse_button(int button, int action, int mods) override {}
+// 	virtual void on_mouse_scroll(glm::vec2 values) override {}
+// };
 
 class Sky
 {
@@ -60,13 +60,15 @@ public:
 		GLfloat position_x;
 		GLfloat position_y;
 	};
+	const std::shared_ptr<const Program> program;
+	const GLint u_camera_pitch;
 
-	Sky(): array_buffer(ArrayBuffer<Attributes>::create(buffer.size(), buffer.data())),
-		   program(Program::from_shaders(
+	Sky(): program(Program::from_shaders(
 	           Shader::from_file("../shaders/sky.vert", GL_VERTEX_SHADER),
 	           Shader::from_file("../shaders/sky.frag", GL_FRAGMENT_SHADER))),
-		   u_window_size(program->get_uniform_location("u_window_size")),
 		   u_camera_pitch(program->get_uniform_location("u_camera_pitch")),
+		   array_buffer(ArrayBuffer<Attributes>::create(buffer.size(), buffer.data())),
+		   u_window_size(program->get_uniform_location("u_window_size")),
 		   a_position(program->get_attribute_location("a_position"))
 	{
 		// FIXME hardcoded constants
@@ -91,9 +93,7 @@ protected:
         {-1.0f, -1.0f},
 	};
 	const std::shared_ptr<const ArrayBuffer<Attributes>> array_buffer;
-	const std::shared_ptr<const Program> program;
 	const GLint u_window_size;
-	const GLint u_camera_pitch;
 	const GLint a_position;
 };
 
@@ -164,20 +164,24 @@ protected:
 	const std::shared_ptr<const ArrayBuffer<Attributes>> array_buffer;
 };
 
-class Scene
+class Scene: public InputProvider::MouseListener
 {
 public:
-	Scene()
+	Scene(GLFWwindow *const window): window(window)
 	{
 		const std::shared_ptr<const Program> program = Program::from_shaders(
 			Shader::from_file("../shaders/object.vert", GL_VERTEX_SHADER),
 			Shader::from_file("../shaders/object.frag", GL_FRAGMENT_SHADER));
 		objects.push_back(std::shared_ptr<Object>(new Object("../assets/suzanne.obj", program)));
 		camera.translate({0.0f, 0.0f, 2.0f});
+		camera.rotate({0.0f, 0.1f, 0.0f});
 	}
 
 	void render()
 	{
+		// FIXME shitting in main thread
+		handle_input();
+
 		glDisable(GL_DEPTH_TEST);
 		sky.render();
 
@@ -185,14 +189,50 @@ public:
 		glClear(GL_DEPTH_BUFFER_BIT);
 		glm::mat4 view_proj = camera.perspective() * camera.matrix();
 		for (const auto &object: objects) {
-			// glm::mat4 mvp = view_proj * object->transformation.matrix();
-			object->program->set_uniform(object->u_mvp, view_proj);
+			glm::mat4 mvp = view_proj * object->transformation.matrix();
+			object->program->set_uniform(object->u_mvp, mvp);
 			object->render();
 		}
 	}
+
+	void handle_input()
+	{
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+			camera.translate({0.0f, 0.0f, -0.01f});
+		}
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+			camera.translate({0.0f, 0.0f, 0.01f});
+		}
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+			camera.translate({-0.01f, 0.0f, 0.0f});
+		}
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+			camera.translate({0.01f, 0.0f, 0.0f});
+		}
+		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+			camera.translate({0.00f, 0.01f, 0.0f});
+		}
+		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+			camera.translate({0.00f, -0.01f, 0.0f});
+		}
+	}
+
+	virtual void on_mouse_move(glm::vec2 cursor_pos) override
+	{
+		const glm::vec2 delta = cursor_pos - last_cursor_pos;
+		camera.rotate({-delta.y * 0.005f, -delta.x * 0.005f, 0.0f});
+	    sky.program->set_uniform(sky.u_camera_pitch, camera.pitch());
+		last_cursor_pos = cursor_pos;
+	}
+
+	virtual void on_mouse_button(int button, int action, int mods) override {}
+	virtual void on_mouse_scroll(glm::vec2 values) override {}
+
 protected:
+	GLFWwindow *const window;
 	Sky sky;
 	Camera camera;
+	glm::vec2 last_cursor_pos;
 	std::vector<std::shared_ptr<Object>> objects;
 };
 
@@ -207,24 +247,20 @@ int main()
 	if (window == nullptr)
 		throw std::runtime_error("cannot create window");
     glfwMakeContextCurrent(window);
-    // InputProvider::bind_callbacks(window);
+    InputProvider::bind_callbacks(window);
     glfwSwapInterval(1);
 	if (glewInit() != GLEW_OK)
         throw std::runtime_error("cannot initialize glew");
 
-    // SkyUpdater updater(program_sky);
-    Scene scene;
-
+    Scene scene(window);
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
-
 		scene.render();
-
         glfwSwapBuffers(window);
     }
 
     glfwTerminate();
-    std::cout << "kill me please" << std::endl;
+    std::cout << "std::f*ck_it()" << std::endl;
     return 0;
 }
