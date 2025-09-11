@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <string>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -34,6 +35,7 @@ public:
 	const std::shared_ptr<const Program> program;
 	const GLint u_camera_pitch;
 
+	// FIXME hardcoded shader paths
 	Sky(): program(Program::from_shaders(
 	           Shader::from_file("../shaders/sky.vert", GL_VERTEX_SHADER),
 	           Shader::from_file("../shaders/sky.frag", GL_FRAGMENT_SHADER))),
@@ -141,11 +143,10 @@ class Scene: public InputProvider::MouseListener,
 			 public InputProvider::KeyboardListener
 {
 public:
-	Scene(GLFWwindow *const window): window(window)
+	Scene(GLFWwindow *const window,
+	      const std::shared_ptr<const Program> program):
+		window(window), program(program)
 	{
-		const std::shared_ptr<const Program> program = Program::from_shaders(
-			Shader::from_file("../shaders/object.vert", GL_VERTEX_SHADER),
-			Shader::from_file("../shaders/object.frag", GL_FRAGMENT_SHADER));
 		objects.push_back(std::shared_ptr<Object>(new Object("../assets/suzanne.obj", program)));
 		objects.push_back(std::shared_ptr<Object>(new Object("../assets/cube.obj", program)));
 		objects.push_back(std::shared_ptr<Object>(new Object("../assets/skull.obj", program)));
@@ -223,10 +224,20 @@ public:
 	virtual void on_keyboard(int key, int action, int mods) override
 	{
 		if (action == GLFW_PRESS) {
-			if (key == GLFW_KEY_RIGHT)
+			switch (key) {
+			case GLFW_KEY_RIGHT:
 				next_object();
-			else if (key == GLFW_KEY_LEFT)
+				break;
+			case GLFW_KEY_LEFT:
 				previous_object();
+				break;
+			case GLFW_KEY_DOWN:
+				load_object();
+				break;
+			case GLFW_KEY_UP:
+				unload_object();
+				break;
+			}
 		}
 	}
 
@@ -243,8 +254,42 @@ public:
 		selected_object = (selected_object == 0 ? objects.size() - 1 : selected_object - 1);
 	}
 
+	void load_object()
+	{
+	    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	    std::cout << "Interrupt! Object loading mode. Enter .obj file path:\n> ";
+		std::string path;
+	    std::getline(std::cin, path);
+	    if (!path.empty()) {
+	    	try {
+		    	objects.push_back(std::shared_ptr<Object>(new Object(path, program)));
+				std::cout << "Successfully loaded." << std::endl;;
+				selected_object = objects.size() - 1;
+		    } catch (const ParsingError &err) {
+		    	std::cout << "Unable to load \"" << path << "\":\n"
+		    			  << err.message(err.type) << " at " << err.line << ":" << err.column
+		    			  << std::endl;
+		    }
+		} else {
+			std::cout << "Path is empty." << std::endl;;
+		}
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	}
+
+	void unload_object()
+	{
+		if (objects.size() > 0) {
+			objects.erase(objects.begin() + selected_object);
+		    std::cout << "Object #" << selected_object << "unloaded." << std::endl;
+		    previous_object();
+	    } else {
+		    std::cout << "No more objects left. " << std::endl;
+	    }
+	}
+
 protected:
 	GLFWwindow *const window;
+	const std::shared_ptr<const Program> program;
 	Sky sky;
 	Camera camera;
 	glm::vec2 last_cursor_pos;
@@ -268,7 +313,10 @@ int main()
 	if (glewInit() != GLEW_OK)
         throw std::runtime_error("cannot initialize glew");
 
-    Scene scene(window);
+	const std::shared_ptr<const Program> program = Program::from_shaders(
+		Shader::from_file("../shaders/object.vert", GL_VERTEX_SHADER),
+		Shader::from_file("../shaders/object.frag", GL_FRAGMENT_SHADER));
+    Scene scene(window, program);
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
