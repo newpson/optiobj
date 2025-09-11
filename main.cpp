@@ -4,6 +4,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include <glm/ext/matrix_transform.hpp>
 #include "program.hpp"
 #include "shader.hpp"
 #include "arraybuffer.hpp"
@@ -75,6 +76,7 @@ class Object
 public:
 	const std::shared_ptr<const Program> program;
 	const GLint u_mvp;
+	const GLint u_local_rotation;
 	const GLint u_is_selected;
 	Transformation transformation;
 
@@ -92,6 +94,7 @@ public:
 	Object(const std::string &path, const std::shared_ptr<const Program> &program):
 		program(program),
 		u_mvp(Object::program->get_uniform_location("u_mvp")),
+		u_local_rotation(Object::program->get_uniform_location("u_local_rotation")),
 		u_is_selected(Object::program->get_uniform_location("u_is_selected")),
 		a_position(Object::program->get_attribute_location("a_position")),
 		a_normal(Object::program->get_attribute_location("a_normal")),
@@ -172,6 +175,11 @@ public:
 			else
 				objects[i]->program->set_uniform(objects[i]->u_is_selected, 0.0f);
 			objects[i]->program->set_uniform(objects[i]->u_mvp, mvp);
+			glm::mat4 local_rotation = glm::identity<glm::mat4>();
+			local_rotation = Transformation::rotate(local_rotation,
+			                                        objects[i]->transformation.rotation);
+			objects[i]->program->set_uniform(objects[i]->u_local_rotation,
+			                                 local_rotation);
 			objects[i]->render();
 		}
 	}
@@ -280,7 +288,7 @@ public:
 	{
 		if (objects.size() > 0) {
 			objects.erase(objects.begin() + selected_object);
-		    std::cout << "Object #" << selected_object << "unloaded." << std::endl;
+		    std::cout << "Object #" << selected_object << " unloaded." << std::endl;
 		    previous_object();
 	    } else {
 		    std::cout << "No more objects left. " << std::endl;
