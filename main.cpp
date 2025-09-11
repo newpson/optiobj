@@ -9,11 +9,7 @@
 #include "inputprovider.hpp"
 #include "mesh.hpp"
 #include "parser.hpp"
-
 #include "camera.hpp"
-// FIXME
-#include <glm/ext/matrix_transform.hpp>
-#include <glm/ext/matrix_clip_space.hpp>
 
 void print_error()
 {
@@ -63,8 +59,6 @@ public:
 	struct Attributes {
 		GLfloat position_x;
 		GLfloat position_y;
-
-		static constexpr size_t num_floats() { return sizeof(Attributes)/sizeof(GLfloat); }
 	};
 
 	Sky(): array_buffer(ArrayBuffer<Attributes>::create(buffer.size(), buffer.data())),
@@ -75,15 +69,6 @@ public:
 		   u_camera_pitch(program->get_uniform_location("u_camera_pitch")),
 		   a_position(program->get_attribute_location("a_position"))
 	{
-		std::cout << "Sky values:\n"
-				  << "buffer attr sets = " << buffer.size() << "\n"
-				  << "array_buffer = " << array_buffer->id() << "\n"
-				  << "program = " << program->id() << "\n"
-				  << "u_window_size = " << u_window_size << "\n"
-				  << "u_camera_pitch = " << u_camera_pitch << "\n"
-				  << "a_position = " << a_position << "\n"
-				  << std::endl;
-		array_buffer->bind();
 		// FIXME hardcoded constants
 	    program->set_uniform(u_window_size, glm::vec2(800.0f, 600.0f));
 	}
@@ -115,6 +100,10 @@ protected:
 class Object
 {
 public:
+	const std::shared_ptr<const Program> program;
+	const GLint u_mvp;
+	Transformation transformation;
+
 	struct Attributes {
 		GLfloat position_x;
 		GLfloat position_y;
@@ -126,38 +115,14 @@ public:
 		// float texture_y;
 	};
 
-	Object(): buffer(generate_attribute_sets(load("../assets/suzanne.obj").triangulate())),
-			  array_buffer(ArrayBuffer<Attributes>::create(buffer.size(), buffer.data())),
-			  program(Program::from_shaders(
-	              Shader::from_file("../shaders/object.vert", GL_VERTEX_SHADER),
-	              Shader::from_file("../shaders/object.frag", GL_FRAGMENT_SHADER))),
-		      u_mvp(program->get_uniform_location("u_mvp")),
-		      a_position(program->get_attribute_location("a_position")),
-		      a_normal(program->get_attribute_location("a_normal"))
-	{
-		// glBindAttribLocation(program->id(), a_position, "a_position");
-		std::cout << "Object values:\n"
-				  << "buffer attr sets = " << buffer.size() << "\n"
-				  << "array_buffer = " << array_buffer->id() << "\n"
-				  << "program = " << program->id() << "\n"
-				  << "u_mvp = " << u_mvp << "\n"
-				  << "a_position = " << a_position << "\n"
-				  << "a_normal = " << a_normal << "\n"
-				  << std::endl;
-		array_buffer->bind();
-		// GLint _array_buffer_binding;
-		// GLint _current_program;
-		// glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &_array_buffer_binding);
-		// glGetIntegerv(GL_CURRENT_PROGRAM, &_current_program);
-		// std::cout << "Object glGet values:\n"
-		// 		  << "GL_ARRAY_BUFFER_BINDING = " << _array_buffer_binding << "\n"
-		// 		  << "GL_CURRENT_PROGRAM = " << _current_program << "\n"
-		// 		  << std::endl;
-
-		Camera camera;
-		camera.translate({0.0f, 0.0f, 2.0f});
-	    program->set_uniform(u_mvp, camera.perspective() * camera.matrix());
-	}
+	Object(const std::string &path, const std::shared_ptr<const Program> &program):
+		program(program),
+		u_mvp(Object::program->get_uniform_location("u_mvp")),
+		a_position(Object::program->get_attribute_location("a_position")),
+		a_normal(Object::program->get_attribute_location("a_normal")),
+		buffer(generate_attribute_sets(load(path).triangulate())),
+		array_buffer(ArrayBuffer<Attributes>::create(buffer.size(), buffer.data()))
+	{}
 
 	void render()
 	{
@@ -192,13 +157,43 @@ protected:
 		return attribute_sets;
 	}
 
+	const GLint a_position;
+	const GLint a_normal;
+
     const std::vector<Attributes> buffer;
 	const std::shared_ptr<const ArrayBuffer<Attributes>> array_buffer;
-	const std::shared_ptr<const Program> program;
-	const GLint u_mvp;
-	const GLint a_position;
-	// const GLint a_position = 2;
-	const GLint a_normal;
+};
+
+class Scene
+{
+public:
+	Scene()
+	{
+		const std::shared_ptr<const Program> program = Program::from_shaders(
+			Shader::from_file("../shaders/object.vert", GL_VERTEX_SHADER),
+			Shader::from_file("../shaders/object.frag", GL_FRAGMENT_SHADER));
+		objects.push_back(std::shared_ptr<Object>(new Object("../assets/suzanne.obj", program)));
+		camera.translate({0.0f, 0.0f, 2.0f});
+	}
+
+	void render()
+	{
+		glDisable(GL_DEPTH_TEST);
+		sky.render();
+
+		glEnable(GL_DEPTH_TEST);
+		glClear(GL_DEPTH_BUFFER_BIT);
+		glm::mat4 view_proj = camera.perspective() * camera.matrix();
+		for (const auto &object: objects) {
+			// glm::mat4 mvp = view_proj * object->transformation.matrix();
+			object->program->set_uniform(object->u_mvp, view_proj);
+			object->render();
+		}
+	}
+protected:
+	Sky sky;
+	Camera camera;
+	std::vector<std::shared_ptr<Object>> objects;
 };
 
 int main()
@@ -217,23 +212,14 @@ int main()
 	if (glewInit() != GLEW_OK)
         throw std::runtime_error("cannot initialize glew");
 
-    Sky sky;
     // SkyUpdater updater(program_sky);
-
- 	Object object;
+    Scene scene;
 
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
 
-		// draw sky
-		glDisable(GL_DEPTH_TEST);
-		sky.render();
-
-		// draw objects
-		glEnable(GL_DEPTH_TEST);
-		glClear(GL_DEPTH_BUFFER_BIT);
-		object.render();
+		scene.render();
 
         glfwSwapBuffers(window);
     }

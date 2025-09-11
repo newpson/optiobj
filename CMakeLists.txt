@@ -55,8 +55,8 @@ target_compile_options(app
     "-Wall"
     "-Wextra"
     "-Wpedantic"
-    "-g"
-    "-fsanitize=address")
-target_link_options(app
-    PUBLIC
-    "-fsanitize=address")
+    "-g")
+    # "-fsanitize=address")
+# target_link_options(app
+#     PUBLIC
+#     "-fsanitize=address")
