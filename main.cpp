@@ -24,35 +24,6 @@ void print_error()
 	}
 }
 
-// class SkyUpdater: public InputProvider::MouseListener
-// {
-// 	glm::vec2 last_values;
-// 	GLint u_camera_pitch;
-// 	std::shared_ptr<const Program> program;
-// 	float pitch = 0.0;
-
-// public:
-// 	SkyUpdater(std::shared_ptr<const Program> program): program(program)
-// 	{
-// 		u_camera_pitch = program->get_uniform_location("u_camera_pitch");
-// 	}
-
-// 	virtual void on_mouse_move(glm::vec2 values) override
-// 	{
-// 		const glm::vec2 delta = values - last_values;
-// 		// std::cout << "moving mouse: " << delta.x << " " << delta.y << std::endl;
-// 		pitch += 0.01 * delta.y;
-// 		if (pitch > 3.1415/2.0)
-// 			pitch = 3.1415/2.0;
-// 		if (pitch < -3.1415/2.0)
-// 			pitch = -3.1415/2.0;
-// 	    program->set_uniform(u_camera_pitch, pitch);
-// 		last_values = values;
-// 	}
-// 	virtual void on_mouse_button(int button, int action, int mods) override {}
-// 	virtual void on_mouse_scroll(glm::vec2 values) override {}
-// };
-
 class Sky
 {
 public:
@@ -102,6 +73,7 @@ class Object
 public:
 	const std::shared_ptr<const Program> program;
 	const GLint u_mvp;
+	const GLint u_is_selected;
 	Transformation transformation;
 
 	struct Attributes {
@@ -118,6 +90,7 @@ public:
 	Object(const std::string &path, const std::shared_ptr<const Program> &program):
 		program(program),
 		u_mvp(Object::program->get_uniform_location("u_mvp")),
+		u_is_selected(Object::program->get_uniform_location("u_is_selected")),
 		a_position(Object::program->get_attribute_location("a_position")),
 		a_normal(Object::program->get_attribute_location("a_normal")),
 		buffer(generate_attribute_sets(load(path).triangulate())),
@@ -164,7 +137,8 @@ protected:
 	const std::shared_ptr<const ArrayBuffer<Attributes>> array_buffer;
 };
 
-class Scene: public InputProvider::MouseListener
+class Scene: public InputProvider::MouseListener,
+			 public InputProvider::KeyboardListener
 {
 public:
 	Scene(GLFWwindow *const window): window(window)
@@ -173,6 +147,8 @@ public:
 			Shader::from_file("../shaders/object.vert", GL_VERTEX_SHADER),
 			Shader::from_file("../shaders/object.frag", GL_FRAGMENT_SHADER));
 		objects.push_back(std::shared_ptr<Object>(new Object("../assets/suzanne.obj", program)));
+		objects.push_back(std::shared_ptr<Object>(new Object("../assets/cube.obj", program)));
+		objects.push_back(std::shared_ptr<Object>(new Object("../assets/skull.obj", program)));
 		camera.translate({0.0f, 0.0f, 2.0f});
 		camera.rotate({0.0f, 0.1f, 0.0f});
 	}
@@ -188,45 +164,84 @@ public:
 		glEnable(GL_DEPTH_TEST);
 		glClear(GL_DEPTH_BUFFER_BIT);
 		glm::mat4 view_proj = camera.perspective() * camera.matrix();
-		for (const auto &object: objects) {
-			glm::mat4 mvp = view_proj * object->transformation.matrix();
-			object->program->set_uniform(object->u_mvp, mvp);
-			object->render();
+		for (std::size_t i = 0; i < objects.size(); ++i) {
+			glm::mat4 mvp = view_proj * objects[i]->transformation.matrix();
+			if (i == selected_object)
+				objects[i]->program->set_uniform(objects[i]->u_is_selected, 1.0f);
+			else
+				objects[i]->program->set_uniform(objects[i]->u_is_selected, 0.0f);
+			objects[i]->program->set_uniform(objects[i]->u_mvp, mvp);
+			objects[i]->render();
 		}
 	}
 
 	void handle_input()
 	{
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-			camera.translate({0.0f, 0.0f, -0.01f});
+			camera.translate({0.0f, 0.0f, -0.03f});
 		}
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-			camera.translate({0.0f, 0.0f, 0.01f});
+			camera.translate({0.0f, 0.0f, 0.03f});
 		}
 		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-			camera.translate({-0.01f, 0.0f, 0.0f});
+			camera.translate({-0.03f, 0.0f, 0.0f});
 		}
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-			camera.translate({0.01f, 0.0f, 0.0f});
+			camera.translate({0.03f, 0.0f, 0.0f});
 		}
 		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-			camera.translate({0.00f, 0.01f, 0.0f});
+			camera.translate({0.00f, 0.03f, 0.0f});
 		}
 		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-			camera.translate({0.00f, -0.01f, 0.0f});
+			camera.translate({0.00f, -0.03f, 0.0f});
 		}
 	}
 
 	virtual void on_mouse_move(glm::vec2 cursor_pos) override
 	{
 		const glm::vec2 delta = cursor_pos - last_cursor_pos;
-		camera.rotate({-delta.y * 0.005f, -delta.x * 0.005f, 0.0f});
-	    sky.program->set_uniform(sky.u_camera_pitch, camera.pitch());
+		const float sens = 0.005f;
 		last_cursor_pos = cursor_pos;
+		if (glfwGetKey(window, GLFW_KEY_G)) {
+			objects[selected_object]->transformation.position
+				+= glm::vec3(delta.x*sens, 0.0f, delta.y*sens);
+			return;
+		} else if (glfwGetKey(window, GLFW_KEY_R)) {
+			objects[selected_object]->transformation.rotation
+				+= glm::vec3(delta.y*sens, delta.x*sens, 0.0f);
+			return;
+		} else if (glfwGetKey(window, GLFW_KEY_T)) {
+			const float scale = delta.x*sens;
+			objects[selected_object]->transformation.scale
+				+= glm::vec3(scale, scale, scale);
+			return;
+		}
+		camera.rotate({-delta.y*sens, -delta.x*sens, 0.0f});
+	    sky.program->set_uniform(sky.u_camera_pitch, camera.pitch());
+	}
+
+	virtual void on_keyboard(int key, int action, int mods) override
+	{
+		if (action == GLFW_PRESS) {
+			if (key == GLFW_KEY_RIGHT)
+				next_object();
+			else if (key == GLFW_KEY_LEFT)
+				previous_object();
+		}
 	}
 
 	virtual void on_mouse_button(int button, int action, int mods) override {}
 	virtual void on_mouse_scroll(glm::vec2 values) override {}
+
+	void next_object()
+	{
+		selected_object = (selected_object + 1) % objects.size();
+	}
+
+	void previous_object()
+	{
+		selected_object = (selected_object == 0 ? objects.size() - 1 : selected_object - 1);
+	}
 
 protected:
 	GLFWwindow *const window;
@@ -234,6 +249,7 @@ protected:
 	Camera camera;
 	glm::vec2 last_cursor_pos;
 	std::vector<std::shared_ptr<Object>> objects;
+	std::size_t selected_object = 0;
 };
 
 int main()
