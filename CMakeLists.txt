@@ -44,7 +44,10 @@ target_sources(app
     inputprovider.cpp
     mesh.cpp
     parser.cpp
-    arraybuffer.hpp)
+    arraybuffer.hpp
+    object.cpp
+    sky.cpp
+    scene.cpp)
 target_link_libraries(app
     PUBLIC
     glfw
@@ -55,8 +58,9 @@ target_compile_options(app
     "-Wall"
     "-Wextra"
     "-Wpedantic"
-    "-g")
+    "-O2")
+    # "-g"
     # "-fsanitize=address")
 # target_link_options(app
-#     PUBLIC
-#     "-fsanitize=address")
+    # PUBLIC
+    # "-fsanitize=address")

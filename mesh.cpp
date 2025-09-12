@@ -1,4 +1,5 @@
 #include "mesh.hpp"
+#include <cstddef>
 #include <string>
 #include <vector>
 #include <glm/glm.hpp>
@@ -25,7 +26,7 @@ Mesh Mesh::triangulate() const
     std::vector<int> new_refs_ends = {0};
     std::vector<int> new_groups_ends = {0};
 
-    for (int i = 0; i < groups_ends.size()-1; ++i) {
+    for (std::size_t i = 0; i < groups_ends.size()-1; ++i) {
         for (int j = groups_ends[i]; j < groups_ends[i+1]; ++j)
             for (int k = refs_ends[j] + 1; k < refs_ends[j+1] - 1; ++k) {
                 new_positions_refs.push_back(positions_refs[refs_ends[j]]);
